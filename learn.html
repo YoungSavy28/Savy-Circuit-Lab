@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Savy Circuit Lab: Lessons</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tilt+Neon&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="lab.css">
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="index.html"><span class="bolt">⚡</span> <b>Savy <span>Circuit</span> Lab</b></a>
+  <div class="prog"><div class="bar"><i id="progBar"></i></div><span id="progTxt"></span></div>
+  <button class="btn ghost sm" id="btnMap">☰ Course</button>
+  <button class="btn ghost sm" data-go="sandbox">Free build</button>
+  <a class="btn ghost sm" href="index.html">Home</a>
+</header>
+
+<div class="lab">
+  <section id="canvasPane">
+    <div class="toolbar" role="toolbar" aria-label="Circuit tools">
+      <div class="grp"><span class="lbl">Add</span>
+        <button data-sim="add:battery" title="Add a battery">🔋 Battery</button>
+        <button data-sim="add:bulb" title="Add a light bulb">💡 Bulb</button>
+        <button data-sim="add:switch" title="Add a switch">⏻ Switch</button>
+        <button data-sim="add:junction" title="Add a junction (joins wires)">● Junction</button>
+      </div>
+      <div class="grp"><span class="lbl">Wire</span>
+        <button class="wc r on" data-color="r" title="Positive wire (press W to switch)">● Red +</button>
+        <button class="wc k" data-color="k" title="Negative wire (press W to switch)">● Black −</button>
+      </div>
+      <div class="grp">
+        <button data-sim="undo" title="Undo (Ctrl+Z)">↶ Undo</button>
+        <button data-sim="clear" title="Remove everything">Clear</button>
+      </div>
+      <div class="grp">
+        <button class="tg on" data-toggle="numbers" title="Show volts and amps">Numbers</button>
+        <button class="tg on" data-toggle="flow" title="Show current flowing">Flow</button>
+      </div>
+      <div class="grp">
+        <button data-sim="zout" title="Zoom out" aria-label="Zoom out">−</button>
+        <button data-sim="zin" title="Zoom in" aria-label="Zoom in">+</button>
+        <button data-sim="fit" title="Fit the circuit">Fit</button>
+      </div>
+    </div>
+    <div class="canvasWrap">
+      <svg id="sim" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Circuit workbench"></svg>
+      <div id="emptyHint"><b>Add a part</b> from the toolbar, then pick a <b>red (+)</b> or <b>black (−)</b> wire, then <b>drag from one terminal (small circle) to another</b>.</div>
+      <div id="banner"></div>
+      <div id="inspector"></div>
+      <div id="toast" role="status"></div>
+      <div id="demoBar">
+        <div class="dcap" id="demoCap"></div>
+        <div class="dctl">
+          <span class="dots" id="demoDots"></span>
+          <button id="demoPrev">◀ Back</button>
+          <button id="demoPlay">⏸ Pause</button>
+          <button id="demoNext">Next ▶</button>
+          <button id="demoExit" class="go">Try it yourself</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <aside id="lessonPane">
+    <nav id="chips" aria-label="Parts of this lesson"></nav>
+    <div id="lesson"></div>
+    <p class="safe">This lab uses battery-level DC only. Real building wiring carries 120 V AC that can kill. Learn the ideas here, and work on real circuits only with supervision, proper training, and the power off and locked out.</p>
+  </aside>
+</div>
+<div id="map" aria-label="Course map"></div>
+<script src="course.js"></script>
+<script src="sim.js"></script>
+<script src="learn.js"></script>
+</body>
+</html>

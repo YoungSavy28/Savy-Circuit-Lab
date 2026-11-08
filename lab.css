@@ -219,3 +219,28 @@ header.top .prog{margin-right:4px}
 .boom.b2{animation-delay:.12s;fill:rgba(255,80,40,.4)}
 @keyframes boom{0%{transform:scale(.3);opacity:1}100%{transform:scale(6);opacity:0}}
 #banner{background:rgba(255,80,80,.16)}
+
+/* ---- test equipment ---- */
+.testgrp[hidden],[data-tool][hidden]{display:none!important}
+.mbody{fill:#161b2b;stroke:#5b6785;stroke-width:2}
+.mbody.mg{stroke:#d9a441}.mbody.mg.testing{stroke:#ff5c5c;filter:drop-shadow(0 0 8px rgba(255,92,92,.8))}
+.mscr{fill:#a8d8a0;stroke:#2b3a2b;stroke-width:1.5}
+.mscr.beep{fill:#ffe07a;filter:drop-shadow(0 0 8px #ffd34a)}
+.mscr.warn{fill:#ffb3a8}
+.mread{font:700 17px 'Inter',monospace;text-anchor:middle;fill:#102010;pointer-events:none}.mread.sm{font-size:11px}
+.mmode{font:600 8px 'Inter',sans-serif;text-anchor:middle;fill:#2b3a2b;letter-spacing:.06em;pointer-events:none}
+.mbody ~ .mmode:last-child,.part.clamp .mmode{fill:#9aa3b8}
+.mdial{fill:#222a40;stroke:#7d89a8;stroke-width:2}.mptr{stroke:#ffb23e;stroke-width:3;stroke-linecap:round}
+.mlamp{fill:#3a2020;stroke:#7d89a8;stroke-width:1.5}.mlamp.on{fill:#ff4d4d;filter:drop-shadow(0 0 6px #ff4d4d)}
+.jl{font:600 8px 'Inter',sans-serif;fill:#9aa3b8;pointer-events:none}.jl.jr{fill:#ff8f8f}.jl.jb{fill:#dfe5f5;text-anchor:end}
+.cabl{fill:#2a2118;stroke:#a47a45;stroke-width:2}.cabc{stroke:#d98f4e;stroke-width:3;stroke-linecap:round}
+.prbody{fill:#14301f;stroke:#4ade80;stroke-width:2}.prt{font:700 8px 'Inter',sans-serif;text-anchor:middle;fill:#86efac;pointer-events:none}.prt.b{font-size:10px}
+.jaw{fill:none;stroke:#8fb4ff;stroke-width:6}.jawgap{stroke:#0b0e16;stroke-width:8}
+.padlock path{stroke:#ffd34a;stroke-width:3}.padlock rect{fill:#ffb23e;stroke:#7a4a00;stroke-width:1.5}
+.locktag{font:700 8px 'Inter',sans-serif;fill:#ffb23e;text-anchor:middle;pointer-events:none}
+.term.ldr .dot{stroke:#ff6b6b}.term.ldk .dot{stroke:#e6ebf7}
+.part.dmm,.part.megger,.part.clamp,.part.cable,.part.prover{cursor:grab}
+#inspector .tip.warn{color:#ffb4a8}
+details.hint{margin:10px 0;border:1px dashed var(--line);border-radius:10px;padding:8px 12px;color:var(--mute);font-size:14px}
+details.hint summary{cursor:pointer;color:var(--neon)}details.hint p{margin:8px 0 2px}
+.plabel{font:700 11px 'Inter',sans-serif;fill:#ffb23e;text-anchor:middle;pointer-events:none;letter-spacing:.04em}

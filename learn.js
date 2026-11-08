@@ -76,6 +76,7 @@ function renderPart() {
     h += '<p class="help">' + (p.help || 'Wire colors matter: red on the + side, black on the − side. Never let red touch black.') + '</p>';
     h += '<div class="acts">' + (p.start && p.start.parts.length ? '<button id="btnParts">Give me the parts</button>' : '') + (p.answer ? '<button id="btnAnswer">Show me the answer</button>' : '') + '<button id="btnReset">Reset workspace</button></div>';
     if (p.tasks.length) h += '<ol class="tasks">' + p.tasks.map(t => '<li data-t="' + t.id + '" class="' + (g.tasks[t.id] ? 'ok' : '') + '"><span class="tick"></span><span>' + t.text + '</span></li>').join('') + '</ol>';
+    if (p.hint) h += '<details class="hint"><summary>Stuck? Show a hint</summary><p>' + p.hint + '</p></details>';
   }
   if (p.quiz && p.quiz.length) {
     h += '<h3>Check yourself</h3>' + p.quiz.map((q, qi) => {
@@ -92,6 +93,14 @@ function renderPart() {
   renderNav(); updateTop();
 }
 
+/* ---------- test-equipment buttons: shown only where a part asks for them ---------- */
+function setTools(p) {
+  const want = p.sandbox ? ['dmm', 'clamp', 'prover', 'megger', 'cable'] : (p.tools || []);
+  document.querySelectorAll('[data-tool]').forEach(b => { b.hidden = want.indexOf(b.dataset.tool) < 0; });
+  const tt = $('#testTools'); if (tt) tt.hidden = !want.length;
+  if (typeof Sim.setOpt === 'function') Sim.setOpt('numbers', p.numbers !== false);
+}
+
 /* ---------- workspace per part ---------- */
 function saveWorkspace() { if (cur && cur.bench !== false && !demo) store.set(wsKey(cur.id), Sim.getState()); }
 function openPart(id) {
@@ -101,6 +110,7 @@ function openPart(id) {
   history.replaceState(null, '', '#' + cur.id);
   const bench = cur.bench !== false;
   document.querySelector('.lab').classList.toggle('nobench', !bench);
+  setTools(cur);
   toggleMap(false);
   renderPart();
   if (bench) {

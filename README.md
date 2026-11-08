@@ -42,3 +42,9 @@ The landing page, course map, next-part buttons and progress bar all update on t
 Every terminal is a node. Wires and closed switches are 0.01 Ω, bulbs are 10 Ω, and batteries are ideal sources with 0.05 Ω internal resistance. Node voltages come from nodal analysis (Gaussian elimination), so series, parallel and mixed circuits work with any number of bulbs. A bulb burns out above 2.5x its rated power, and a wire joining a battery's + and − is flagged as a short circuit.
 
 Battery-level DC only. Real building wiring can kill: practise on real circuits only with training, supervision, and the power locked out.
+
+## Test equipment (Lesson 2: Electrical test equipment)
+Part types you can use in any lesson's `start`/`answer` states: `dmm` (multimeter: `mode` V/A/R/C, `fuse`, `bad`), `clamp`, `prover` (known 9 V source), `megger` (`tv`, `testing`), `cable` (`ir` = hidden insulation in megohms).
+Hidden faults: bulb `dead:true`, wire `open:true`, switch `stuck:true`. A switch can be `locked:true` (padlock). Any part can show a `label`.
+Per-part options in a lesson file: `tools: ['dmm','clamp','prover','megger','cable']` (which Test buttons appear), `numbers:false` (hide on-screen volts/amps), `hint:'...'` (collapsible hint).
+Task checks get `stats.meters`, `stats.meggers`, `stats.clamps`, `stats.switches[].locked`, `stats.hidden`, `stats.blownFuses`. Each meter has `across` (parts it is directly across), `onProver`, `live`, `v`, `text`.

@@ -6,7 +6,7 @@
      2. Add '<your-name>' to the FILES list below (no .js).
    That's it. The landing page, course map, progress bar and navigation all update by themselves. */
 (function () {
-  const FILES = ['circuits'];                 // <- add new lesson files here, in the order you learned them
+  const FILES = ['circuits', 'test-equipment'];                 // <- add new lesson files here, in the order you learned them
 
   const C = window.COURSE = {
     title: 'Savy Circuit Lab',

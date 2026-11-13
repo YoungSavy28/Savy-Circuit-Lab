@@ -1,4 +1,23 @@
 :root{--bg:#07090f;--ink:#e8ecf5;--mute:#8b94a8;--line:rgba(255,255,255,.09);--neon:#ffb23e;--neon2:#ff6a3d;--blue:#46c2ff;--ok:#5dd6a0;--bad:#ff6b6b}
+/* Lesson 3: diagram wiring boards. Labels accompany every conductor color. */
+.box-wiring{margin:24px 0;padding:18px;border:1px solid var(--line);border-radius:18px;background:#0c101a}
+.box-wiring p{margin:10px 0}.bw-tag{font-size:11px;letter-spacing:.08em;color:var(--neon)}
+.bw-colors,.bw-actions{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}
+.box-wiring button{border:1px solid #3d4658;background:#171e2d;border-radius:9px;padding:9px 12px;line-height:1.5}
+.box-wiring button:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+.bw-colors button{border-left:5px solid var(--wire)}.bw-colors button[aria-pressed=true]{outline:2px solid var(--wire);outline-offset:2px}
+.bw-board{position:relative;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;padding:12px 0;isolation:isolate}
+.bw-group{min-width:0;border:1px dashed #566078;border-radius:12px;padding:12px 24px 12px 12px;background:#101621}
+.bw-group h4{min-height:42px;color:var(--mute);font-size:12px;line-height:1.5;margin-bottom:10px}
+.box-wiring .bw-terminal{position:relative;z-index:2;display:block;width:100%;text-align:left;margin:12px 0;font-size:12px;background:#182236;min-height:48px;overflow-wrap:anywhere}
+.bw-terminal span{color:var(--neon)}.box-wiring .bw-terminal[aria-pressed=true]{outline:2px solid var(--blue)}
+.bw-lines{position:absolute;inset:0;width:100%;height:100%;z-index:1;pointer-events:none}
+.bw-actions button:first-child{background:var(--neon);color:#1b1002;font-weight:700}.box-wiring button:disabled{opacity:.4;cursor:default}
+.bw-feedback{padding:12px;border-left:3px solid var(--neon);background:#171d29;min-height:64px}.bw-feedback.bw-correct{border-color:var(--ok);color:var(--ok)}
+.bw-connections{padding-left:24px;font-size:12px}.bw-connections li{margin:12px 0}.bw-connections small{display:block;color:var(--mute)}
+.bw-connections button{font-size:11px;padding:3px 9px;margin-top:5px}
+.bw-guide{margin-top:18px;padding-top:14px;border-top:1px solid var(--line);font-size:13px}.bw-guide summary{cursor:pointer;color:var(--neon)}.bw-guide ol{padding-left:22px}.bw-guide li{margin:10px 0}
+@media(max-width:480px){.box-wiring{padding:12px}.bw-board{gap:12px}.bw-group{padding:7px 22px 7px 7px}.box-wiring .bw-terminal{font-size:11px;padding:8px 6px}.bw-colors button{font-size:12px}}
 *{box-sizing:border-box;margin:0}
 html,body{height:100%}
 body{background:radial-gradient(120% 80% at 50% 0,#10131d,#06070b);color:var(--ink);font:400 15px/1.55 Inter,system-ui,sans-serif;overflow:hidden}

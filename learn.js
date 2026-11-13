@@ -8,6 +8,7 @@ const store = {
 };
 let progress = store.get('circuitlab:progress', {});
 let cur = null, demo = null, saveT = 0;
+let unmountWiring = null;
 const pg = id => (progress[id] = progress[id] || { tasks: {}, quiz: {}, mem: {} });
 const wsKey = id => 'circuitlab:ws:' + id;
 const allParts = () => C.allParts();
@@ -24,6 +25,7 @@ const allParts = () => C.allParts();
 
 function done(p) {
   const g = pg(p.id);
+  if (p.wiring) return !!g.wiring && (p.quiz || []).every((_, i) => g.quiz['q' + i] !== undefined);
   if (p.tasks && p.tasks.length) return p.tasks.every(t => g.tasks[t.id]);
   if (p.quiz && p.quiz.length) return p.quiz.every((_, i) => g.quiz['q' + i] !== undefined);
   return !!g.read;
@@ -71,6 +73,7 @@ function renderPart() {
   if (p.demo) h += '<button class="btn demo" id="btnDemo">▶ Watch the demo</button>';
   if (p.learn && p.learn.length) h += '<h3>Learn</h3><ul class="learn">' + p.learn.map(t => '<li>' + t + '</li>').join('') + '</ul>';
   if (p.refs) h += '<h3>The diagrams</h3><div class="refs">' + p.refs.map(r => '<figure>' + Sim.thumb(r.state) + '<figcaption>' + r.label + '</figcaption></figure>').join('') + '</div>';
+  if (p.wiring) h += '<div id="boxWiring"></div>';
   if (p.bench !== false && (p.tasks.length || p.sandbox)) {
     h += '<h3>' + (p.sandbox ? 'Build' : 'Your turn') + '</h3>';
     h += '<p class="help">' + (p.help || 'Wire colors matter: red on the + side, black on the − side. Never let red touch black.') + '</p>';
@@ -86,10 +89,20 @@ function renderPart() {
     }).join('');
   }
   if (!p.sandbox) {
-    if (!(p.tasks && p.tasks.length) && !(p.quiz && p.quiz.length)) h += '<button class="btn sm" id="btnRead">Mark this part complete</button>';
+    if (!p.wiring && !(p.tasks && p.tasks.length) && !(p.quiz && p.quiz.length)) h += '<button class="btn sm" id="btnRead">Mark this part complete</button>';
     h += '<div id="complete" class="complete' + (done(p) ? ' show' : '') + '"><b>Part complete ✓</b>' + (next ? ' <button class="btn sm" data-go="' + next.part.id + '">' + next.label + ' →</button>' : ' <span>That is everything so far. More lessons get added as the class goes on.</span>') + '</div>';
   }
+  if (unmountWiring) { unmountWiring(); unmountWiring = null; }
   $('#lesson').innerHTML = h;
+  if (p.wiring) unmountWiring = BoxWiring.mount($('#boxWiring'), p.wiring, {
+    state: store.get('circuitlab:box-wiring:' + p.id, null),
+    onChange(state, complete) {
+      store.set('circuitlab:box-wiring:' + p.id, state);
+      g.wiring = complete;
+      saveProgress(); updateTop(); renderNav();
+      const c = $('#complete'); if (c) c.classList.toggle('show', done(p));
+    }
+  });
   renderNav(); updateTop();
 }
 

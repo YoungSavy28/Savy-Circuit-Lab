@@ -51,30 +51,59 @@
   }
 
   const defs = {
-    trainingfeed: { name: 'Isolated training supply', terms: [[90,-45],[90,0],[90,45]], labels: ['HOT','NEUTRAL','GROUND'], box: [-90,-85,180,170] },
-    outletbox: { name: 'Receptacle outlet box', terms: [[105,-30],[-105,-30],[42,100],[-42,100]], labels: ['BRASS · H','SILVER · N','GREEN · G','BOX BOND'], box: [-105,-90,210,190] },
-    devicebox: { name: 'Switch device box', terms: [[105,-40],[105,20],[42,100],[-42,100]], labels: ['BRASS 1','BRASS 2','GREEN · G','BOX BOND'], box: [-105,-90,210,190] },
-    junctionbox: { name: 'Junction box', terms: [[-105,-40],[-105,25],[105,-40],[105,25]], labels: ['HOT SPLICE','NEUTRAL','GROUND','BOX BOND'], box: [-105,-90,210,180] },
-    pullbox: { name: 'Pull box', terms: [[-140,-55],[-140,0],[-140,55],[140,-55],[140,0],[140,55],[55,105]], labels: ['IN · H','IN · N','IN · G','OUT · H','OUT · N','OUT · G','BOX BOND'], box: [-140,-90,280,195] },
-    wireconnector: { name: 'Splice connector', terms: [[0,0]], labels: ['CONNECTOR'], box: [-40,-25,80,50] },
-    cableend: { name: 'Outgoing cable', terms: [[-90,-45],[-90,0],[-90,45]], labels: ['HOT','NEUTRAL','GROUND'], box: [-90,-85,180,170] },
-    buildingload: { name: 'Light fixture', terms: [[-90,-45],[-90,0],[-90,45]], labels: ['SW. HOT','NEUTRAL','GROUND'], box: [-90,-85,180,170] }
+    trainingfeed: {name:'Supply cable',terms:[[78,-46],[88,0],[78,46]],labels:['HOT','NEUTRAL','GROUND'],box:[-95,-85,190,170]},
+    outletbox: {name:'Duplex receptacle in metal box',terms:[[42,-24],[-42,-24],[28,64],[-76,65]],labels:['BRASS','SILVER','GREEN','BOX BOND'],box:[-105,-100,210,200]},
+    devicebox: {name:'Single-pole switch in metal box',terms:[[42,-28],[42,22],[-28,64],[-76,65]],labels:['BRASS 1','BRASS 2','GREEN','BOX BOND'],box:[-105,-100,210,200]},
+    junctionbox: {name:'Open junction box',terms:[[-45,-20],[-45,35],[45,-20],[65,60]],labels:['HOT SPLICE','NEUTRAL','GROUND','BOX BOND'],box:[-105,-90,210,180]},
+    pullbox: {name:'Open pull box',terms:[[-140,-55],[-140,0],[-140,55],[140,-55],[140,0],[140,55],[55,65]],labels:['IN · H','IN · N','IN · G','OUT · H','OUT · N','OUT · G','BOX BOND'],box:[-150,-90,300,180]},
+    wireconnector: {name:'Splice connector',terms:[[0,0]],labels:['CONNECTOR'],box:[-40,-25,80,50]},
+    cableend: {name:'Outgoing cable',terms:[[-78,-46],[-88,0],[-78,46]],labels:['HOT','NEUTRAL','GROUND'],box:[-95,-85,190,170]},
+    buildingload: {name:'Light fixture socket',terms:[[48,22],[-48,22],[0,78]],labels:['BRASS','SILVER','GROUND'],box:[-90,-100,180,200]}
   };
-  const isPart = p => !!defs[p.type];
+  const isPart=p=>!!defs[p.type];
+  function terminalKind(p,k) {
+    if(p.type==='outletbox')return ['h','n','g','g'][k];
+    if(p.type==='devicebox')return ['h','h','g','g'][k];
+    if(p.type==='junctionbox')return ['h','n','g','g'][k];
+    if(p.type==='pullbox')return ['h','n','g','h','n','g','g'][k];
+    if(p.type==='wireconnector')return (p.ports?.[0]||'').startsWith('n')?'n':(p.ports?.[0]||'').startsWith('h')?'h':'g';
+    return ['h','n','g'][k];
+  }
   function markup(p) {
-    const d = defs[p.type], b = d.box;
-    let h = '<rect class="building-shell" x="' + (b[0]+7) + '" y="' + (b[1]+7) + '" width="' + (b[2]-14) + '" height="' + (b[3]-14) + '" rx="14"/>';
-    if (p.type === 'outletbox') h += '<rect class="building-device" x="-30" y="-58" width="60" height="114" rx="9"/>' + [-28,24].map(y => '<rect x="-15" y="' + y + '" width="5" height="14" rx="1" fill="#151b26"/><rect x="10" y="' + y + '" width="4" height="11" rx="1" fill="#151b26"/><path d="M-5 ' + (y+26) + ' a5 5 0 0 1 10 0 v4 h-10z" fill="#151b26"/>').join('');
-    if (p.type === 'devicebox') h += '<rect class="building-device" x="-28" y="-57" width="56" height="113" rx="8"/><rect class="building-toggle" x="-14" y="' + (p.closed ? -34 : 1) + '" width="28" height="32" rx="4"/><text class="building-state" x="0" y="76">' + (p.closed ? 'ON' : 'OFF') + '</text>';
-    if (p.type === 'trainingfeed') h += '<text class="building-center" x="-20" y="-50">ISOLATED</text><text class="building-center" x="-20" y="-28">TRAINING FEED</text><text class="building-small" x="0" y="65">CONNECTIONS ONLY</text>';
-    if (p.type === 'buildingload') h += '<circle class="building-glow" r="62" fill="url(#glowGrad)" opacity="0"/><circle class="building-lamp" r="31"/><path class="pl" d="M-18 -18 L18 18 M18 -18 L-18 18"/>';
-    if (p.type === 'junctionbox') h += '<text class="building-center" x="0" y="-64">SPLICE INSIDE BOX</text><rect class="building-connector" x="-65" y="-46" width="34" height="16" rx="4"/><rect class="building-connector" x="-65" y="17" width="34" height="16" rx="4"/><rect class="building-connector" x="31" y="-46" width="34" height="16" rx="4"/>';
-    if (p.type === 'pullbox') h += '<text class="building-center" x="0" y="-62">PULL THROUGH</text><text class="building-small" x="0" y="79">CONTINUOUS H / N</text>';
-    if (p.type === 'wireconnector') h = '<rect class="building-connector" x="-22" y="-16" width="44" height="32" rx="7"/>';
-    if (p.type === 'cableend') h += '<text class="building-center" x="12" y="-12">OUTGOING</text><text class="building-center" x="12" y="10">CABLE</text>';
-    if (p.type !== 'wireconnector') d.terms.forEach(([x,y], k) => {
-      const bottom = y >= 100, tx = bottom ? x : x < 0 ? x+13 : x-13;
-      h += '<text class="building-port" x="' + tx + '" y="' + (bottom ? y-13 : y-9) + '" text-anchor="' + (bottom ? 'middle' : x < 0 ? 'start' : 'end') + '">' + d.labels[k] + '</text>';
+    const d=defs[p.type];let h='';
+    if(['outletbox','devicebox','junctionbox','pullbox'].includes(p.type)) {
+      const b=d.box;
+      h='<rect class="building-shell" x="'+(b[0]+5)+'" y="'+(b[1]+5)+'" width="'+(b[2]-10)+'" height="'+(b[3]-10)+'" rx="9"/>';
+      h+='<path class="steel-detail" d="M'+(b[0]+12)+' '+(b[1]+20)+' h12 M'+(b[0]+12)+' '+(b[1]+30)+' h12"/>';
+      [-65,65].forEach(x=>{h+='<circle class="box-knockout" cx="'+x+'" cy="-77" r="10"/>';});
+    }
+    if(p.type==='outletbox'||p.type==='devicebox') {
+      h+='<rect class="mounting-strap" x="-13" y="-85" width="26" height="171" rx="5"/><ellipse class="strap-hole" cx="0" cy="-76" rx="4" ry="6"/><ellipse class="strap-hole" cx="0" cy="77" rx="4" ry="6"/>';
+      h+='<rect class="device-side" x="-41" y="-53" width="82" height="107" rx="5"/><rect class="building-device" x="-29" y="-57" width="58" height="111" rx="9"/>';
+      if(p.type==='outletbox')h+=[-30,19].map(y=>'<path class="receptacle-face" d="M-19 '+(y-7)+' Q0 '+(y-17)+' 19 '+(y-7)+' v35 Q0 '+(y+43)+' -19 '+(y+35)+'z"/><rect x="-12" y="'+y+'" width="4" height="14" rx="1" fill="#18202b"/><rect x="9" y="'+y+'" width="4" height="11" rx="1" fill="#18202b"/><path d="M-5 '+(y+25)+' a5 5 0 0 1 10 0 v4 h-10z" fill="#18202b"/>').join('');
+      else h+='<rect class="switch-slot" x="-14" y="-36" width="28" height="66" rx="4"/><rect class="building-toggle" x="-10" y="'+(p.closed?-32:2)+'" width="20" height="27" rx="3"/><text class="building-state" x="0" y="-63">'+(p.closed?'ON':'OFF')+'</text>';
+    }
+    if(p.type==='trainingfeed'||p.type==='cableend') {
+      const flip=p.type==='cableend'?-1:1;
+      h='<g transform="scale('+flip+',1)"><rect class="cable-sheath" x="-90" y="-24" width="100" height="48" rx="8"/>';
+      const colors=['#262b35','#ecedf1','#70bb8d'];
+      [[78,-46],[88,0],[78,46]].forEach(([x,y],k)=>{
+        const sy=(k-1)*13;
+        h+='<path class="cable-tail-outline" d="M0 '+sy+' Q32 '+sy+' 45 '+y+' H'+x+'"/><path class="cable-tail" stroke="'+colors[k]+'" d="M0 '+sy+' Q32 '+sy+' 45 '+y+' H'+x+'"/><path class="copper-tip" d="M'+(x-12)+' '+y+' H'+x+'"/>';
+      });h+='</g>';
+      h+='<text class="building-small" x="0" y="76">'+(p.type==='trainingfeed'?'ISOLATED SUPPLY CABLE':'OUTGOING CABLE')+'</text>';
+    }
+    if(p.type==='buildingload') h+='<circle class="fixture-base" cx="0" cy="28" r="53"/><rect class="socket-base" x="-23" y="-2" width="46" height="38" rx="5"/><path class="socket-ridges" d="M-22 7 h44 M-22 16 h44 M-22 25 h44"/><circle class="building-glow" cx="0" cy="-35" r="73" fill="url(#glowGrad)" opacity="0"/><path class="building-lamp" d="M-18 0 v-12 C-58 -55 -30 -87 0 -87 C30 -87 58 -55 18 -12 V0z"/><path class="bulb-filament" d="M-9 -6 l-7 -29 16 8 16 -8 -7 29"/>';
+    if(p.type==='junctionbox')h+=[[-45,-20],[-45,35],[45,-20]].map(([x,y])=>'<rect class="building-connector" x="'+(x-20)+'" y="'+(y-13)+'" width="40" height="26" rx="5"/>').join('');
+    if(p.type==='pullbox')h+='<text class="building-small" x="0" y="-65">OPEN PULL BOX</text>';
+    if(p.type==='wireconnector')h='<rect class="building-connector" x="-22" y="-16" width="44" height="32" rx="7"/><path class="connector-ports" d="M-13 -7 v14 M0 -7 v14 M13 -7 v14"/>';
+    d.terms.forEach(([x,y],k)=>{
+      const kind=terminalKind(p,k),screw=!['trainingfeed','cableend','pullbox','wireconnector'].includes(p.type);
+      if(screw)h+='<circle class="terminal-screw screw-'+kind+'" cx="'+x+'" cy="'+y+'" r="7"/><path class="screw-slot" d="M'+(x-3)+' '+(y+3)+' l6 -6"/>';
+      let tx=x,ty=y-13,anchor='middle';
+      if(p.type==='outletbox'||p.type==='devicebox') {if(k<2){tx=x<0?x-12:x+12;ty=y+3;anchor=x<0?'end':'start';}else ty=y+19;}
+      if(p.type==='buildingload'){if(k<2){tx=x<0?x-12:x+12;ty=y+3;anchor=x<0?'end':'start';}else ty=y+17;}
+      if(p.type!=='wireconnector')h+='<text class="building-port" x="'+tx+'" y="'+ty+'" text-anchor="'+anchor+'">'+d.labels[k]+'</text>';
     });
     return h;
   }
@@ -119,6 +148,6 @@
         building:{correct:!!result.ok,safe:!!(result.ok || result.incomplete),message:result.message,paths,functional} }
     };
   }
-  root.BoxWiring = { validate, defs, isPart, markup, compute, types:TYPES };
+  root.BoxWiring = { validate, defs, isPart, markup, compute, terminalKind, types:TYPES };
 })(window);
 

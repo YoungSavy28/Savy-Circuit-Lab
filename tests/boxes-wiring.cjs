@@ -52,3 +52,19 @@ const bulb={parts:[{id:1,type:'battery',x:100,y:100,v:9},{id:2,type:'bulb',x:300
 assert.equal(evaluate(bulb).lit,1,'original DC loop still lights');checks++;
 const short=copy(bulb);short.wires.push({id:'w3',a:'1:0',b:'1:1',c:'r'});assert.equal(evaluate(short).blownBat,1,'original short detection still works');checks++;
 console.log('Passed '+checks+' assertions, all 10 workbench activities/demos, and prior-lesson preset evaluation.');
+// Device terminals must be on the hardware, not on abstract enclosure edges.
+const D=context.BoxWiring.defs;
+assert.equal(D.outletbox.terms[0][0],42);
+assert.equal(D.outletbox.terms[1][0],-42);
+assert.ok(Math.abs(D.outletbox.terms[0][0]) < Math.abs(D.outletbox.box[0]));
+assert.notDeepEqual(D.outletbox.terms[2],D.outletbox.terms[3]);
+for(const type of ['outletbox','devicebox','buildingload']){
+  const html=context.BoxWiring.markup({type});
+  assert.ok(html.includes('terminal-screw screw-h'));
+  assert.ok(html.includes('terminal-screw screw-n') || type==='devicebox');
+  assert.ok(html.includes('terminal-screw screw-g'));
+}
+const cableHTML=context.BoxWiring.markup({type:'trainingfeed'});
+assert.ok(cableHTML.includes('cable-sheath') && cableHTML.includes('copper-tip'));
+assert.ok(!cableHTML.includes('building-shell'));
+console.log('Passed device-terminal geometry and hardware rendering checks.');

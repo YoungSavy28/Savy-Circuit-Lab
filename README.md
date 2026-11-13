@@ -57,6 +57,11 @@ and ground, operate the light, branch a junction box, finish its splices, route
 conductors through a pull box, and bond the pull box. A final inspection quiz
 reviews the finished assembly.
 
+Wires attach directly to colored screw terminals on the receptacle, switch and
+light socket. The metal enclosure has a separate grounding/bonding screw.
+The supply is drawn as a cable with stripped conductor ends. Junction-box
+connections land on connectors inside the open box.
+
 Each activity has its own demo, starting components/wires, answer, goals and saved
 workspace. Drag components by their bodies; select a conductor function and drag
 between terminal circles. Click switches to operate them. Undo, deletion,

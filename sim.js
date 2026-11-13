@@ -335,7 +335,8 @@ function render() {
   S.parts.forEach(p => TERMS[p.type].forEach((_, k) => {
     const tid = p.id + ':' + k, q = termPos(S.parts, tid), conn = S.wires.some(w => w.a === tid || w.b === tid);
     const cls = 'term' + (conn ? ' conn' : '') + (S.pending === tid ? ' pend' : '') + (S.hl.indexOf(tid) >= 0 ? ' hl' : '') + (p.type === 'junction' ? ' jt' : '') + ((p.type === 'dmm' || p.type === 'megger') ? (k ? ' ldk' : ' ldr') : '');
-    t += '<g class="' + cls + '" data-term="' + tid + '"><circle class="ring" cx="' + q.x + '" cy="' + q.y + '" r="13"/><circle class="dot" cx="' + q.x + '" cy="' + q.y + '" r="5.5"/><circle class="thit" cx="' + q.x + '" cy="' + q.y + '" r="15"/></g>';
+    const screwClass = BoxWiring.isPart(p) ? ' device-terminal terminal-' + BoxWiring.terminalKind(p,k) : '';
+    t += '<g class="' + cls + screwClass + '" data-term="' + tid + '"><circle class="ring" cx="' + q.x + '" cy="' + q.y + '" r="13"/><circle class="dot" cx="' + q.x + '" cy="' + q.y + '" r="5.5"/><circle class="thit" cx="' + q.x + '" cy="' + q.y + '" r="15"/></g>';
   }));
   L.terms.innerHTML = t;
   hint.style.display = S.parts.length ? 'none' : '';

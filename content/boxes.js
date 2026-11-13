@@ -146,7 +146,7 @@
       const p = {id:parts.length+1,type,x,y,rot:0,ports,label};
       ports.forEach((name,k) => { portMap[name] = p.id+':'+k; }); parts.push(p); return p;
     };
-    const feed = add('trainingfeed',150,240,['feed-h','feed-n','feed-g'],'Isolated training feed');
+    const feed = add('trainingfeed',150,240,['feed-h','feed-n','feed-g'],'Supply cable · isolated');
     if (id === 'receptacle') {
       add('outletbox',600,210,['rec-h','rec-n','rec-g','bond'],'Receptacle · metal outlet box');
       add('wireconnector',370,430,['g-splice'],'Ground connector');
@@ -188,7 +188,7 @@
     return {
       id:'boxes-'+id,title,goal,mins:6,workbench:'building',numbers:false,bench:true,
       body:'<p><b>Connection trainer.</b> Use the same drag-to-wire workbench as Lessons 1 and 2. These models teach conductor relationships; they do not simulate mains voltage or calculate installation requirements.</p>',
-      learn,help:'Drag a component by its body to move it. Select a conductor in the toolbar, then drag from one terminal circle to another. Click a wire to delete it. W cycles conductor choices. Use Undo to reverse an edit.',
+      learn,help:'Drag the device body or its box to move it. Wire directly to the colored terminal screws on the device; the separate green screw on the enclosure is its box bond. Select a conductor in the toolbar, then drag from one terminal circle to another. Click a wire to delete it. W cycles conductor choices. Use Undo to reverse an edit.',
       hint:base.learn.slice(0,3).join(' '),start,answer,tasks,quiz,
       demo:[
         {text:'<b>'+title+'.</b> '+goal,state:start,ms:5000},
@@ -200,8 +200,8 @@
   const all=()=>true, none=()=>false, hn=e=>e[2]==='h'||e[2]==='n', groundWire=e=>e[2]==='g';
   const hot=e=>e[2]==='h', hotSwitch=e=>e[2]==='h'||e[2]==='sh';
   const receptacleFeed=activity('receptacle-feed','Connect the receptacle feed','Connect hot to brass and neutral to silver.','receptacle',none,hn,[
-    'Find the supply HOT and NEUTRAL terminals and the receptacle BRASS · H and SILVER · N terminals.',
-    'Select <b>Hot · black</b> and drag supply HOT to BRASS · H. Select <b>Neutral · white</b> and drag supply NEUTRAL to SILVER · N.',
+    'Find the supply HOT and NEUTRAL terminals and the receptacle brass and silver screws on the receptacle body.',
+    'Select <b>Hot · black</b> and drag the supply cable hot end to the receptacle brass screw. Select <b>Neutral · white</b> and drag the supply cable neutral end to the receptacle silver screw.',
     'This first step intentionally leaves grounding unfinished. Complete it in the next part before treating the model as ready.'
   ],[original[2].quiz[0]],[live('hot','Connect supply hot to receptacle brass.',path('h')),live('neutral','Connect supply neutral to receptacle silver.',path('n'))]);
   const receptacleGround=activity('receptacle-ground','Add grounding pigtails','Bond both the receptacle and its metal box.','receptacle',hn,all,original[2].learn.slice(0,4),[original[2].quiz[1]],[

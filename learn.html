@@ -21,7 +21,16 @@
 <div class="lab">
   <section id="canvasPane">
     <div class="toolbar" role="toolbar" aria-label="Circuit tools">
-      <div class="grp"><span class="lbl">Add</span>
+      <div class="grp" data-building-tools hidden><span class="lbl">Boxes &amp; devices</span>
+        <button data-sim="add:outletbox">Receptacle box</button><button data-sim="add:devicebox">Switch box</button>
+        <button data-sim="add:junctionbox">Junction box</button><button data-sim="add:pullbox">Pull box</button>
+        <button data-sim="add:wireconnector">Splice connector</button>
+      </div>
+      <div class="grp" data-building-tools hidden><span class="lbl">Conductor</span>
+        <button data-color="h" class="wc h">Hot · black</button><button data-color="sh" class="wc sh">Switched hot · red</button>
+        <button data-color="n" class="wc n">Neutral · white</button><button data-color="g" class="wc g">Ground · bare/green</button>
+      </div>
+      <div class="grp" data-battery-tools><span class="lbl">Add</span>
         <button data-sim="add:battery" title="Add a battery">🔋 Battery</button>
         <button data-sim="add:bulb" title="Add a light bulb">💡 Bulb</button>
         <button data-sim="add:switch" title="Add a switch">⏻ Switch</button>
@@ -35,7 +44,7 @@
         <button data-sim="add:cable" data-tool="cable" title="Add a cable to test">🔌 Cable</button>
         <button class="tg" data-toggle="sound" data-tool="dmm" title="Play a beep for continuity">🔈 Beep</button>
       </div>
-      <div class="grp"><span class="lbl">Wire</span>
+      <div class="grp" data-battery-tools><span class="lbl">Wire</span>
         <button class="wc r on" data-color="r" title="Positive wire (press W to switch)">● Red +</button>
         <button class="wc k" data-color="k" title="Negative wire (press W to switch)">● Black −</button>
       </div>
@@ -43,7 +52,7 @@
         <button data-sim="undo" title="Undo (Ctrl+Z)">↶ Undo</button>
         <button data-sim="clear" title="Remove everything">Clear</button>
       </div>
-      <div class="grp">
+      <div class="grp" data-battery-tools>
         <button class="tg on" data-toggle="numbers" title="Show volts and amps">Numbers</button>
         <button class="tg on" data-toggle="flow" title="Show current flowing">Flow</button>
       </div>
@@ -75,11 +84,12 @@
   <aside id="lessonPane">
     <nav id="chips" aria-label="Parts of this lesson"></nav>
     <div id="lesson"></div>
-    <p class="safe">This lab uses battery-level DC only. Real building wiring carries 120 V AC that can kill. Learn the ideas here, and work on real circuits only with supervision, proper training, and the power off and locked out.</p>
+    <p class="safe">The circuit workbench uses battery-level DC. Box-wiring exercises teach connection relationships without mains voltage. Real building wiring can kill. Work on real circuits only with training, supervision, the supply isolated and locked out as applicable, and absence of voltage verified.</p>
   </aside>
 </div>
 <div id="map" aria-label="Course map"></div>
 <script src="course.js"></script>
+<script src="boxes-wiring.js"></script>
 <script src="sim.js"></script>
 <script src="learn.js"></script>
 </body>

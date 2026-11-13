@@ -244,3 +244,36 @@ header.top .prog{margin-right:4px}
 details.hint{margin:10px 0;border:1px dashed var(--line);border-radius:10px;padding:8px 12px;color:var(--mute);font-size:14px}
 details.hint summary{cursor:pointer;color:var(--neon)}details.hint p{margin:8px 0 2px}
 .plabel{font:700 11px 'Inter',sans-serif;fill:#ffb23e;text-anchor:middle;pointer-events:none;letter-spacing:.04em}
+
+/* Building components share the original SVG editor and terminal hit targets. */
+[hidden]{display:none!important}
+.building-shell{fill:#162234;fill-opacity:.65;stroke:#7c8ba3;stroke-width:2}
+.building-device{fill:#d6d5cf;stroke:#fff;stroke-width:1.5}
+.building-toggle{fill:#7a8591;stroke:#3c4450;stroke-width:2}
+.building-lamp{fill:#323c4f;stroke:#eed3a0;stroke-width:3}.building-lit .building-lamp{fill:#ffe3a2}
+.building-connector{fill:#e9a13b;stroke:#ffe4ab;stroke-width:2}
+.building-center,.building-small,.building-port,.building-state{fill:#f2f5fa;font-family:Inter,system-ui,sans-serif;pointer-events:none}
+.building-center,.building-small,.building-state{text-anchor:middle}
+.building-center{font-size:10px;font-weight:700}.building-small{font-size:8px;fill:#b8c4d6}.building-port{font-size:9px;font-weight:700}.building-state{font-size:12px;font-weight:700}
+.wire.h,.pv.h{stroke:#efaf45}.wire.sh,.pv.sh{stroke:#ff6767}.wire.n,.pv.n{stroke:#f2f4ff}.wire.g,.pv.g{stroke:#65dca3;stroke-dasharray:9 4}
+.wc.h{border-color:#efaf45}.wc.sh{border-color:#ff6767}.wc.n{border-color:#f2f4ff}.wc.g{border-color:#65dca3}
+#banner.building-feedback{background:#182333;border:1px solid #d9a341;color:#f5e8cc;font-size:12px;max-width:80%;pointer-events:none}
+#banner.building-ok{border-color:#65dca3;color:#a6efc9}
+
+/* Device hardware: wires terminate on the appliance screws themselves. */
+.building-shell{fill-opacity:.18;stroke:#6c7c93;stroke-width:3}
+.steel-detail,.box-knockout{fill:none;stroke:#45536a;stroke-width:2}
+.mounting-strap{fill:#8994a3;stroke:#c3ccd6;stroke-width:1}.strap-hole{fill:#17202d}
+.device-side{fill:#51473b;stroke:#85705a;stroke-width:2}.receptacle-face{fill:#e8e6db;stroke:#c0beb5;stroke-width:1}
+.switch-slot{fill:#3d424b}.building-toggle{fill:#f4eee0;stroke:#9a988f;stroke-width:1}
+.cable-sheath{fill:#d5c69e;stroke:#8c8069;stroke-width:2}.cable-tail-outline{fill:none;stroke:#7a8394;stroke-width:7}
+.cable-tail{fill:none;stroke-width:5}.copper-tip{fill:none;stroke:#d89457;stroke-width:5}
+.fixture-base{fill:#bcbfc4;stroke:#e8e8e7;stroke-width:3}.socket-base{fill:#94938e;stroke:#e5dfca;stroke-width:2}
+.socket-ridges{fill:none;stroke:#c9c5bc;stroke-width:2}.building-lamp{fill:#414956;fill-opacity:.8;stroke:#e7d7ad;stroke-width:2}
+.bulb-filament{fill:none;stroke:#d3ae6d;stroke-width:2}.screw-h{fill:#c89c42}.screw-n{fill:#dfe3eb}.screw-g{fill:#3cba75}
+.terminal-screw{stroke:#263142;stroke-width:1.5}.screw-slot{fill:none;stroke:#28303b;stroke-width:1.5}
+.connector-ports{fill:none;stroke:#5e421a;stroke-width:3}
+.device-terminal .dot{opacity:.12}.device-terminal .ring{stroke-width:1.5;opacity:.4}
+.device-terminal.terminal-h .ring{stroke:#d4aa55}.device-terminal.terminal-n .ring{stroke:#eff2f7}.device-terminal.terminal-g .ring{stroke:#65dca3}
+.device-terminal:hover .ring,.device-terminal.pend .ring{opacity:1;stroke-width:3}
+.wire.h,.pv.h{stroke:#252a33;filter:drop-shadow(0 0 1px #d4a74d)}

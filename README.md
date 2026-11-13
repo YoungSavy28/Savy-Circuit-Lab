@@ -48,3 +48,35 @@ Part types you can use in any lesson's `start`/`answer` states: `dmm` (multimete
 Hidden faults: bulb `dead:true`, wire `open:true`, switch `stuck:true`. A switch can be `locked:true` (padlock). Any part can show a `label`.
 Per-part options in a lesson file: `tools: ['dmm','clamp','prover','megger','cable']` (which Test buttons appear), `numbers:false` (hide on-screen volts/amps), `hint:'...'` (collapsible hint).
 Task checks get `stats.meters`, `stats.meggers`, `stats.clamps`, `stats.switches[].locked`, `stats.hidden`, `stats.blownFuses`. Each meter has `across` (parts it is directly across), `onProver`, `live`, `v`, `text`.
+
+## Boxes and devices (Lesson 3)
+Thirteen short parts introduce box identification and selection, followed by ten
+hands-on activities on the original SVG workbench: wire a receptacle feed, add
+grounding pigtails, repair crossed conductors, wire a switch, complete its neutral
+and ground, operate the light, branch a junction box, finish its splices, route
+conductors through a pull box, and bond the pull box. A final inspection quiz
+reviews the finished assembly.
+
+Wires attach directly to colored screw terminals on the receptacle, switch and
+light socket. The metal enclosure has a separate grounding/bonding screw.
+The supply is drawn as a cable with stripped conductor ends. Junction-box
+connections land on connectors inside the open box.
+
+Each activity has its own demo, starting components/wires, answer, goals and saved
+workspace. Drag components by their bodies; select a conductor function and drag
+between terminal circles. Click switches to operate them. Undo, deletion,
+rotation, zoom, fit and touch tap-to-connect use the same editor as earlier lessons.
+
+The new component types and connection checks live in `boxes-wiring.js` and
+integrate with `sim.js`. These are connection models, not mains-voltage or AC
+power calculations. Existing battery and test-equipment lessons keep their
+original numerical solver. Fixture glow is a teaching indicator.
+
+Live wiring goals update as connections change. Building-wiring parts require
+all goals and answered quizzes. Each step saves separately in browser storage.
+
+Run dependency-free checks with Node.js:
+
+```sh
+node tests/boxes-wiring.cjs
+```

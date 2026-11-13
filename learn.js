@@ -8,7 +8,6 @@ const store = {
 };
 let progress = store.get('circuitlab:progress', {});
 let cur = null, demo = null, saveT = 0;
-let unmountWiring = null;
 const pg = id => (progress[id] = progress[id] || { tasks: {}, quiz: {}, mem: {} });
 const wsKey = id => 'circuitlab:ws:' + id;
 const allParts = () => C.allParts();
@@ -25,7 +24,7 @@ const allParts = () => C.allParts();
 
 function done(p) {
   const g = pg(p.id);
-  if (p.wiring) return !!g.wiring && (p.quiz || []).every((_, i) => g.quiz['q' + i] !== undefined);
+  if (p.workbench === 'building') return p.tasks.every(t => g.tasks[t.id]) && (p.quiz || []).every((_,i) => g.quiz['q'+i] !== undefined);
   if (p.tasks && p.tasks.length) return p.tasks.every(t => g.tasks[t.id]);
   if (p.quiz && p.quiz.length) return p.quiz.every((_, i) => g.quiz['q' + i] !== undefined);
   return !!g.read;
@@ -73,7 +72,6 @@ function renderPart() {
   if (p.demo) h += '<button class="btn demo" id="btnDemo">▶ Watch the demo</button>';
   if (p.learn && p.learn.length) h += '<h3>Learn</h3><ul class="learn">' + p.learn.map(t => '<li>' + t + '</li>').join('') + '</ul>';
   if (p.refs) h += '<h3>The diagrams</h3><div class="refs">' + p.refs.map(r => '<figure>' + Sim.thumb(r.state) + '<figcaption>' + r.label + '</figcaption></figure>').join('') + '</div>';
-  if (p.wiring) h += '<div id="boxWiring"></div>';
   if (p.bench !== false && (p.tasks.length || p.sandbox)) {
     h += '<h3>' + (p.sandbox ? 'Build' : 'Your turn') + '</h3>';
     h += '<p class="help">' + (p.help || 'Wire colors matter: red on the + side, black on the − side. Never let red touch black.') + '</p>';
@@ -89,25 +87,19 @@ function renderPart() {
     }).join('');
   }
   if (!p.sandbox) {
-    if (!p.wiring && !(p.tasks && p.tasks.length) && !(p.quiz && p.quiz.length)) h += '<button class="btn sm" id="btnRead">Mark this part complete</button>';
+    if (!(p.tasks && p.tasks.length) && !(p.quiz && p.quiz.length)) h += '<button class="btn sm" id="btnRead">Mark this part complete</button>';
     h += '<div id="complete" class="complete' + (done(p) ? ' show' : '') + '"><b>Part complete ✓</b>' + (next ? ' <button class="btn sm" data-go="' + next.part.id + '">' + next.label + ' →</button>' : ' <span>That is everything so far. More lessons get added as the class goes on.</span>') + '</div>';
   }
-  if (unmountWiring) { unmountWiring(); unmountWiring = null; }
   $('#lesson').innerHTML = h;
-  if (p.wiring) unmountWiring = BoxWiring.mount($('#boxWiring'), p.wiring, {
-    state: store.get('circuitlab:box-wiring:' + p.id, null),
-    onChange(state, complete) {
-      store.set('circuitlab:box-wiring:' + p.id, state);
-      g.wiring = complete;
-      saveProgress(); updateTop(); renderNav();
-      const c = $('#complete'); if (c) c.classList.toggle('show', done(p));
-    }
-  });
   renderNav(); updateTop();
 }
 
 /* ---------- test-equipment buttons: shown only where a part asks for them ---------- */
 function setTools(p) {
+  const building = p.workbench === 'building';
+  Sim.setWorkbench(building);
+  document.querySelectorAll('[data-battery-tools]').forEach(el => { el.hidden=building; });
+  document.querySelectorAll('[data-building-tools]').forEach(el => { el.hidden=!building; });
   const want = p.sandbox ? ['dmm', 'clamp', 'prover', 'megger', 'cable'] : (p.tools || []);
   document.querySelectorAll('[data-tool]').forEach(b => { b.hidden = want.indexOf(b.dataset.tool) < 0; });
   const tt = $('#testTools'); if (tt) tt.hidden = !want.length;
@@ -140,12 +132,13 @@ function evaluate(stats) {
   if (!cur || demo || cur.bench === false) return;
   const g = pg(cur.id); let changed = false; const was = done(cur);
   cur.tasks.forEach(t => {
-    if (g.tasks[t.id]) return;
+    if (g.tasks[t.id] && !t.live) return;
     let ok = false; try { ok = !!t.check(stats, g.mem); } catch (e) { ok = false; }
-    if (ok) { g.tasks[t.id] = true; changed = true; const li = document.querySelector('[data-t="' + t.id + '"]'); if (li) li.classList.add('ok', 'pop'); }
+    if (!!g.tasks[t.id] !== ok) { g.tasks[t.id] = ok; changed = true; const li = document.querySelector('[data-t="' + t.id + '"]'); if (li) { li.classList.toggle('ok',ok); if(ok) li.classList.add('pop'); } }
   });
   if (changed) {
     saveProgress(); updateTop(); renderNav();
+    const complete = $('#complete'); if (complete) complete.classList.toggle('show',done(cur));
     if (!was && done(cur)) { const c = $('#complete'); if (c) c.classList.add('show'); Sim.toast('🎉 Part complete!'); }
   } else if (Object.keys(g.mem).length) saveProgress();
 }

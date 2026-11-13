@@ -22,12 +22,15 @@ const MODE_TIP = {
   R: 'Only on a DEAD circuit. The meter sends its own tiny current. If it finds voltage across the leads it shows LIVE! instead of a number.',
   C: 'Only on a DEAD circuit. Shows OL for open, and a number plus a beep indicator for a path under about 30 Ω.'
 };
+Object.entries(BoxWiring.defs).forEach(([type,d]) => { TERMS[type] = d.terms; BOX[type] = d.box; HIT[type] = [d.box[0]+10,d.box[1]+10,d.box[2]-20,d.box[3]-20]; });
+const wireClass = w => ['h','n','g','sh'].includes(w.c) ? w.c : w.c === 'k' ? 'k' : 'r';
 const NAMES = { battery: 'Battery', bulb: 'Light bulb', 'switch': 'Switch', junction: 'Junction', dmm: 'Multimeter', megger: 'Megohmmeter (megger)', cable: 'Cable under test', prover: 'Proving unit', clamp: 'Clamp meter' };
+Object.entries(BoxWiring.defs).forEach(([type,d]) => { NAMES[type] = d.name; });
 const ROT = [[1, 0], [0, 1], [-1, 0], [0, -1]];
 const ASPECT = 0.62;
 
 const S = { parts: [], wires: [], nextId: 1, wireN: 1, sel: null, view: { x: 0, y: 0, w: 1000, h: 620 },
-  opts: { flow: true, numbers: true, sound: false }, color: 'r', faults: [], faultWires: new Set(), boomAt: {}, readOnly: false, hl: [], pending: null, preview: null, undo: [],
+  building: false, opts: { flow: true, numbers: true, sound: false }, color: 'r', faults: [], faultWires: new Set(), boomAt: {}, readOnly: false, hl: [], pending: null, preview: null, undo: [],
   stats: null, res: {}, wireI: {}, seen: new Set(), animate: false, drag: null, lastB: {}, meters: {}, megs: {}, mg: {}, clampR: {} };
 let svg, L = {}, cb = {}, insp, banner, toastEl, hint;
 
@@ -53,6 +56,7 @@ function tidy(pts) {
 }
 function route(parts, a, b) {
   const A = termPos(parts, a), B = termPos(parts, b); if (!A || !B) return null;
+  if (pidOf(a) === pidOf(b) && byId(parts,pidOf(a)).type === 'pullbox' && Math.abs(kOf(a)-kOf(b)) === 3) return [[A.x,A.y],[B.x,B.y]];
   const dx = B.x - A.x, dy = B.y - A.y;
   const pick = (x, y) => Math.abs(x) >= Math.abs(y) ? [Math.sign(x) || 1, 0] : [0, Math.sign(y) || 1];
   const da = A.dir, db = B.dir, ea = da || pick(dx, dy), eb = db || pick(-dx, -dy);
@@ -91,7 +95,7 @@ function nets(parts, wires) {
   return { idx, f };
 }
 function autoColor(parts, wires) {           // gives older / preset wires a colour based on which side of the battery they are on
-  if (!wires.some(w => !w.c)) return;
+  if (parts.some(BoxWiring.isPart) || !wires.some(w => !w.c)) return;
   const { idx, f } = nets(parts, wires), plus = new Set(), minus = new Set();
   parts.forEach(p => { if (p.type === 'battery') { plus.add(f(idx.get(p.id + ':0'))); minus.add(f(idx.get(p.id + ':1'))); } });
   wires.forEach(w => { if (w.c) return; const r = f(idx.get(w.a)), hp = plus.has(r), hm = minus.has(r); w.c = hm && !hp ? 'k' : 'r'; });
@@ -240,6 +244,7 @@ function nearestWirePt(parts, wires, x, y, maxD) {
 function attachClamps(parts, wires) { parts.forEach(p => { if (p.type === 'clamp') { const b = nearestWirePt(parts, wires, p.x, p.y, 6); p.onWire = b ? b.w : null; } }); }
 
 function compute(parts, wires) {
+  if (S.building || parts.some(BoxWiring.isPart)) return BoxWiring.compute(parts, wires);
   let out, blew = [], blewBat = [], blewFuse = [];
   attachClamps(parts, wires);
   for (let pass = 0; pass < 6; pass++) {
@@ -270,6 +275,7 @@ function leadWire(parts, w) { const a = byId(parts, pidOf(w.a)), b = byId(parts,
 
 /* ---------------- drawing ---------------- */
 function partInner(p) {
+  if (BoxWiring.isPart(p)) return BoxWiring.markup(p);
   switch (p.type) {
     case 'battery': return ((S.boomAt[p.id] && Date.now() - S.boomAt[p.id] < 1300) ? '<circle class="boom" r="20"/><circle class="boom b2" r="20"/>' : '') + '<line class="pl" x1="-40" y1="0" x2="-15" y2="0"/><line class="pl" x1="15" y1="0" x2="40" y2="0"/>' +
       '<line class="pl pw" x1="-15" y1="-17" x2="-15" y2="17"/><line class="pl" x1="-5" y1="-9" x2="-5" y2="9"/>' +
@@ -320,7 +326,7 @@ function render() {
   L.wires.innerHTML = S.wires.map(w => {
     const pts = route(S.parts, w.a, w.b); if (!pts) return '';
     const d = pathD(pts), isNew = S.animate && !seen.has(w.id); now.add(w.id);
-    return '<g data-wire="' + w.id + '"><path class="wire ' + (w.c === 'k' ? 'k' : 'r') + (isNew ? ' draw' : '') + '" id="w-' + w.id + '" pathLength="1" d="' + d + '"/><path class="whit" d="' + d + '"/></g>';
+    return '<g data-wire="' + w.id + '"><path class="wire ' + wireClass(w) + (isNew ? ' draw' : '') + '" id="w-' + w.id + '" pathLength="1" d="' + d + '"/><path class="whit" d="' + d + '"/></g>';
   }).join('');
   S.wires.forEach(w => now.add(w.id)); S.seen = now;
   L.flow.innerHTML = S.wires.map(w => { const pts = route(S.parts, w.a, w.b); return pts ? '<path class="flow" id="f-' + w.id + '" d="' + pathD(pts) + '"/>' : ''; }).join('');
@@ -338,6 +344,9 @@ function render() {
 
 function paint() {
   const st = S.stats; if (!st) return;
+  if (st.building) {
+    S.parts.forEach(p => { const el=document.getElementById('pt-'+p.id); if (!el) return; el.classList.toggle('building-lit',p.type === 'buildingload' && st.building.functional); const glow=el.querySelector('.building-glow'); if(glow) glow.style.opacity=st.building.functional ? 1 : 0; });
+  }
   S.parts.forEach(p => {
     const r = S.res[p.id], g = document.getElementById('pt-' + p.id); if (!r || !g) return;
     if (p.type === 'bulb') {
@@ -370,8 +379,8 @@ function paint() {
   S.parts.forEach(p => { if (p.label) { const bx = BOX[p.type] || [-50, -36, 100, 72], off = (p.rot || 0) % 2 ? 56 : -bx[1] ; nums += '<text class="plabel" x="' + p.x + '" y="' + (p.y - ((p.rot || 0) % 2 ? 60 : Math.abs(bx[1]) + 8)) + '">' + p.label + '</text>'; } });
   L.nums.innerHTML = nums;
   const kinds = S.faults.map(f => f.kind), kind = kinds.indexOf('short') >= 0 ? 'short' : kinds.indexOf('mix') >= 0 ? 'mix' : kinds[0];
-  if (kind) banner.innerHTML = BANNER[kind];
-  banner.classList.toggle('show', !!kind);
+  if (st.building) { banner.textContent=st.building.message; banner.classList.toggle('show', S.wires.length > 0); banner.classList.toggle('building-ok',st.building.correct); banner.classList.add('building-feedback'); }
+  else { banner.classList.remove('building-feedback','building-ok'); if (kind) banner.innerHTML = BANNER[kind]; banner.classList.toggle('show', !!kind); }
   updateReadouts(); updateDisplays();
 }
 
@@ -441,6 +450,7 @@ function megRamp(ms) {
 function buildInspector() {
   const s = S.sel; if (!s || S.readOnly) { insp.innerHTML = ''; insp.classList.remove('show'); return; }
   insp.classList.add('show');
+  if (s.kind === 'wire' && S.building) { const w=S.wires.find(x=>x.id===s.id); const t=w && BoxWiring.types[w.c]; insp.innerHTML='<div class="ih"><b>'+(t ? t.label : 'Wire')+'</b><button data-act="desel" aria-label="Close">×</button></div><div class="ib"><p class="tip">Delete and redraw with another conductor selected to change its function.</p><button data-act="del" class="danger">Delete wire</button></div>'; return; }
   if (s.kind === 'wire') { const w = S.wires.find(x => x.id === s.id); insp.innerHTML = '<div class="ih"><b>' + (w && w.c === 'k' ? 'Black (−) wire' : 'Red (+) wire') + '</b><button data-act="desel" aria-label="Close">×</button></div><div class="ib"><div class="row"><button data-act="wcol">Make it ' + (w && w.c === 'k' ? 'red (+)' : 'black (−)') + '</button><button data-act="newwire">Swap in a new wire</button><button data-act="del" class="danger">Delete wire</button></div></div>'; return; }
   const p = byId(S.parts, s.id); if (!p) { insp.innerHTML = ''; insp.classList.remove('show'); return; }
   let h = '<div class="ih"><b>' + NAMES[p.type] + '</b><button data-act="desel" aria-label="Close">×</button></div><div class="ib">';
@@ -450,6 +460,8 @@ function buildInspector() {
   if (p.type === 'battery' && (p.state || 'ok') === 'blown') h += '<p class="tip">This battery is destroyed. Fix the wiring first.</p><div class="row"><button data-act="bat">Replace battery</button></div>';
   if (p.type === 'battery') h += '<div class="ro"><span>Current out of +</span><b id="r-I">-</b></div><div class="chips">' +
     [1.5, 3, 6, 9, 12].map(v => '<button data-act="volt" data-v="' + v + '" class="' + ((p.v || 9) === v ? 'on' : '') + '">' + v + ' V</button>').join('') + '</div>';
+  if (BoxWiring.isPart(p)) h += '<p class="tip">Drag the body to move it. Drag between the small terminal circles to wire it. Labels identify each terminal. This is a connection trainer, not an AC power calculation.</p>';
+  if (p.type === 'devicebox') h += '<div class="row"><button data-act="flip">'+(p.closed ? 'Open switch' : 'Close switch')+'</button></div>';
   if (p.type === 'junction') h += '<p class="tip">A junction joins any number of wires at one point.</p>';
   if (p.type === 'dmm') {
     const m = p.mode || 'V';
@@ -513,9 +525,9 @@ function freeSpot() {
   return c.find(q => S.parts.every(p => Math.hypot(p.x - q[0], p.y - q[1]) > 110)) || [cx, cy];
 }
 function add(type) {
-  if (S.readOnly) return; pushUndo(); const [x, y] = freeSpot();
+  if (S.readOnly) return; if (S.building !== !!BoxWiring.defs[type]) return; pushUndo(); const [x, y] = freeSpot();
   const p = { id: S.nextId++, type, x, y, rot: 0 };
-  if (type === 'battery') { p.v = 9; p.state = 'ok'; } if (type === 'switch') p.closed = false; if (type === 'bulb') p.state = 'ok';
+  if (type === 'battery') { p.v = 9; p.state = 'ok'; } if (type === 'switch' || type === 'devicebox') p.closed = false; if (type === 'bulb') p.state = 'ok';
   if (type === 'dmm') { p.mode = 'V'; p.fuse = 'ok'; } if (type === 'megger') { p.tv = 500; p.testing = false; }
   if (type === 'cable') { S.cableN = (S.cableN || 0) + 1; p.ir = [500, 80, 0.3, 2000][S.cableN % 4]; }
   S.parts.push(p); S.sel = { kind: 'part', id: p.id }; refresh();
@@ -567,7 +579,7 @@ function up(e) {
       render();
     }
   } else if (d.kind === 'move') {
-    if (!d.moved) { const p = byId(S.parts, d.id); if (p && p.type === 'switch') flipSwitch(p); }
+    if (!d.moved) { const p = byId(S.parts, d.id); if (p && (p.type === 'switch' || p.type === 'devicebox')) flipSwitch(p); }
   } else if (d.kind === 'pan' && !d.moved) { S.sel = null; S.pending = null; refresh('select'); }
 }
 function applyView() { svg.setAttribute('viewBox', S.view.x + ' ' + S.view.y + ' ' + S.view.w + ' ' + S.view.h); }
@@ -579,7 +591,13 @@ function zoom(f, cx, cy) {
 }
 function fit() {
   if (!S.parts.length) { S.view = { x: 0, y: 0, w: 1000, h: 620 }; return applyView(); }
-  let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; S.parts.forEach(p => { x0 = Math.min(x0, p.x - 90); x1 = Math.max(x1, p.x + 90); y0 = Math.min(y0, p.y - 90); y1 = Math.max(y1, p.y + 90); });
+  let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; S.parts.forEach(p => {
+    const bx=BoxWiring.defs[p.type]?.box;
+    let mx=bx ? Math.max(Math.abs(bx[0]),Math.abs(bx[0]+bx[2]))+45 : 90;
+    let my=bx ? Math.max(Math.abs(bx[1]),Math.abs(bx[1]+bx[3]))+45 : 90;
+    if((p.rot||0)%2) [mx,my]=[my,mx];
+    x0=Math.min(x0,p.x-mx);x1=Math.max(x1,p.x+mx);y0=Math.min(y0,p.y-my);y1=Math.max(y1,p.y+my);
+  });
   const w = Math.max(svg.clientWidth && svg.clientWidth < 700 ? 480 : 700, x1 - x0, (y1 - y0) / ASPECT); S.view = { x: (x0 + x1) / 2 - w / 2, y: (y0 + y1) / 2 - w * ASPECT / 2, w, h: w * ASPECT }; applyView();
 }
 
@@ -617,7 +635,7 @@ function init(el, opts) {
     if (e.key === 'Delete' || e.key === 'Backspace') { removeSel(); e.preventDefault(); }
     else if (e.key === 'r' || e.key === 'R') rotateSel();
     else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { undo(); e.preventDefault(); }
-    else if (e.key === 'w' || e.key === 'W') setColor(S.color === 'r' ? 'k' : 'r');
+    else if (e.key === 'w' || e.key === 'W') setColor(S.building ? ['h','n','g','sh'][(['h','n','g','sh'].indexOf(S.color)+1)%4] : S.color === 'r' ? 'k' : 'r');
     else if (e.key === 'Escape') { S.pending = null; S.sel = null; refresh('select'); }
   });
   document.querySelectorAll('[data-sim]').forEach(b => b.addEventListener('click', () => {
@@ -643,6 +661,7 @@ function setState(st, o) {
 }
 window.Sim = {
   init, setState, undo, add, fit, zoom, toast,
+  setWorkbench: building => { const changed=S.building !== !!building; S.building=!!building; if(changed) setColor(S.building ? 'h' : 'r'); },
   setOpt: (k, v) => { S.opts[k] = !!v; document.querySelectorAll('[data-toggle="' + k + '"]').forEach(b => b.classList.toggle('on', S.opts[k])); if (S.stats) paint(); },
   getState: () => ({ parts: clone(S.parts), wires: clone(S.wires), nextId: S.nextId, wireN: S.wireN, view: Object.assign({}, S.view) }),
   setReadOnly: v => { S.readOnly = !!v; S.drag = null; svg && svg.classList.toggle('ro', S.readOnly); refresh('mode'); },
@@ -654,7 +673,7 @@ window.Sim = {
     c.parts.forEach(p => { x0 = Math.min(x0, p.x - 60); x1 = Math.max(x1, p.x + 60); y0 = Math.min(y0, p.y - 60); y1 = Math.max(y1, p.y + 60); });
     const save = S.lastB; S.lastB = {}; c.parts.forEach(p => { if (p.type === 'bulb') S.lastB[p.id] = out.res[p.id].b; });
     const saveSel = S.sel; S.sel = null;
-    const wires = c.wires.map(w => { const pts = route(c.parts, w.a, w.b); return pts ? '<path class="wire ' + (w.c === 'k' ? 'k' : 'r') + (Math.abs(out.wireI[w.id]) > 0.005 ? ' live' : '') + '" d="' + pathD(pts) + '"/>' : ''; }).join('');
+    const wires = c.wires.map(w => { const pts = route(c.parts, w.a, w.b); return pts ? '<path class="wire ' + wireClass(w) + (Math.abs(out.wireI[w.id]) > 0.005 ? ' live' : '') + '" d="' + pathD(pts) + '"/>' : ''; }).join('');
     const parts = c.parts.map(p => partMarkup(p, false)).join(''); S.lastB = save; S.sel = saveSel;
     return '<svg class="thumb" viewBox="' + x0 + ' ' + y0 + ' ' + (x1 - x0) + ' ' + (y1 - y0) + '" aria-hidden="true">' + wires + parts + '</svg>';
   }

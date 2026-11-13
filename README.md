@@ -50,26 +50,28 @@ Per-part options in a lesson file: `tools: ['dmm','clamp','prover','megger','cab
 Task checks get `stats.meters`, `stats.meggers`, `stats.clamps`, `stats.switches[].locked`, `stats.hidden`, `stats.blownFuses`. Each meter has `across` (parts it is directly across), `onProver`, `live`, `v`, `text`.
 
 ## Boxes and devices (Lesson 3)
-Seven parts introduce outlet/device boxes, box selection, junction boxes and pull boxes.
-Four interactive wiring boards cover a common-feed receptacle, a basic single-pole
-switch and light, a two-branch junction box, and continuous conductors through a pull box.
+Thirteen short parts introduce box identification and selection, followed by ten
+hands-on activities on the original SVG workbench: wire a receptacle feed, add
+grounding pigtails, repair crossed conductors, wire a switch, complete its neutral
+and ground, operate the light, branch a junction box, finish its splices, route
+conductors through a pull box, and bond the pull box. A final inspection quiz
+reviews the finished assembly.
 
-Choose the conductor function, then click/tap two labeled terminal buttons.
-Use the splice connector nodes to branch. Check wiring for feedback; Undo,
-Remove and Reset let you revise connections. The connection guide provides an example.
-Keyboard users can Tab to each terminal and press Enter or Space.
+Each activity has its own demo, starting components/wires, answer, goals and saved
+workspace. Drag components by their bodies; select a conductor function and drag
+between terminal circles. Click switches to operate them. Undo, deletion,
+rotation, zoom, fit and touch tap-to-connect use the same editor as earlier lessons.
 
-The boards save locally per part. Completion requires a successful wiring check
-and answering that part's quiz. Editing or resetting the wiring clears its completion
-until checked again. Previous lessons retain their existing completion behavior.
+The new component types and connection checks live in `boxes-wiring.js` and
+integrate with `sim.js`. These are connection models, not mains-voltage or AC
+power calculations. Existing battery and test-equipment lessons keep their
+original numerical solver. Fixture glow is a teaching indicator.
 
-These are de-energized connection diagrams, separate from the battery solver.
-They do not calculate AC power, box fill, pull-box dimensions or installation compliance.
-Source references appear in the lesson's final inspection part.
+Live wiring goals update as connections change. Building-wiring parts require
+all goals and answered quizzes. Each step saves separately in browser storage.
 
-Run the dependency-free wiring checks with Node.js:
+Run dependency-free checks with Node.js:
 
 ```sh
 node tests/boxes-wiring.cjs
 ```
-

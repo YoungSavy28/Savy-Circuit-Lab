@@ -1,4 +1,5 @@
-/* Diagram-only wiring trainer. Intentionally independent of the battery solver. */
+/* Building-wiring components for the existing SVG workbench.
+   Connectivity exercises share its drag/wire/undo editor; no mains physics. */
 (function (root) {
   'use strict';
   const TYPES = {
@@ -25,7 +26,7 @@
       seen.add(key);
       for (const id of w.slice(0, 2)) {
         degree.set(id, degree.get(id) + 1);
-        if (degree.get(id) > 1 && !byId.get(id).hub) return { ok: false, message: byId.get(id).label + ': use the splice connector to branch; this terminal accepts one trainer wire.' };
+        if (degree.get(id) > (byId.get(id).capacity || 1) && !byId.get(id).hub) return { ok: false, message: byId.get(id).label + ': use the splice connector to branch; this terminal accepts one trainer wire.' };
       }
       parent.set(find(w[0]), find(w[1]));
     }
@@ -44,84 +45,80 @@
       if (error) { if (!best) best = { ok: false, message: error }; continue; }
       const missing = nets.flatMap(net => net.filter(id => find(id) !== find(net[0]) || degree.get(id) === 0));
       if (!missing.length) return { ok: true, message: 'Connections correct. All required paths, including the metal-box bond, are connected. This checks the diagram only.' };
-      return { ok: false, message: 'Keep going: the path to ' + byId.get(missing[0]).label + ' is incomplete. Check every connector and grounding pigtail.' };
+      return { ok: false, incomplete: true, message: 'Keep going: the path to ' + byId.get(missing[0]).label + ' is incomplete. Check every connector and grounding pigtail.' };
     }
     return best || { ok: false, message: 'Check the connections.' };
   }
 
-  function mount(host, spec, options) {
-    const nodes = terminals(spec), byId = new Map(nodes.map(n => [n.id, n]));
-    let wires = Array.isArray(options.state?.wires) ? options.state.wires.filter(w => Array.isArray(w) && w.length === 3 && byId.has(w[0]) && byId.has(w[1]) && w[0] !== w[1] && TYPES[w[2]]).map(w => w.slice()) : [];
-    let selected = null, kind = 'h', checked = !!options.state?.checked, disposed = false, frame = 0;
-    let message = checked ? validate(spec, wires).message : 'Choose a conductor, then select two terminal buttons to connect them.';
-    const snapshot = () => ({ wires: wires.map(w => w.slice()), checked });
-    function notify() { options.onChange(snapshot(), checked && validate(spec, wires).ok); }
-    function draw() {
-      if (disposed) return;
-      const board = host.querySelector('.bw-board'), svg = host.querySelector('.bw-lines');
-      const rect = board.getBoundingClientRect();
-      svg.setAttribute('viewBox', '0 0 ' + rect.width + ' ' + rect.height);
-      svg.innerHTML = wires.map((w, i) => {
-        const ae = host.querySelector('[data-terminal="' + w[0] + '"]');
-        const be = host.querySelector('[data-terminal="' + w[1] + '"]');
-        const a = ae.getBoundingClientRect(), b = be.getBoundingClientRect();
-        const same = ae.parentElement === be.parentElement;
-        const goesRight = a.left < b.left;
-        const x1 = (same || goesRight ? a.right : a.left) - rect.left;
-        const x2 = (same || !goesRight ? b.right : b.left) - rect.left;
-        const y1 = a.top - rect.top + a.height / 2, y2 = b.top - rect.top + b.height / 2;
-        const lane = Math.max(x1, x2) + 12;
-        const d = same ? 'M' + x1 + ',' + y1 + ' H' + lane + ' V' + y2 + ' H' + x2 : 'M' + x1 + ',' + y1 + ' L' + x2 + ',' + y2;
-        const mx = same ? lane : (x1+x2)/2, my = (y1+y2)/2;
-        return '<path d="' + d + '" stroke="' + TYPES[w[2]].color + '" stroke-width="3" fill="none" stroke-dasharray="' + (w[2] === 'g' ? '7 4' : 'none') + '"/><circle cx="' + x1 + '" cy="' + y1 + '" r="4" fill="' + TYPES[w[2]].color + '"/><circle cx="' + x2 + '" cy="' + y2 + '" r="4" fill="' + TYPES[w[2]].color + '"/><circle cx="' + mx + '" cy="' + my + '" r="8" fill="#10131d"/><text x="' + mx + '" y="' + (my+4) + '" fill="white" text-anchor="middle" font-size="10">' + (i+1) + '</text>';
-      }).join('');
-    }
-    function render(focus) {
-      const result = checked ? validate(spec, wires) : null;
-      host.className = 'box-wiring';
-      host.innerHTML = '<h3>' + esc(spec.title) + '</h3><p class="bw-tag">DE-ENERGIZED DIAGRAM · NO AC POWER SIMULATION</p><p>' + esc(spec.note) + '</p>' +
-        '<div class="bw-colors" role="group" aria-label="Conductor function">' + Object.entries(TYPES).filter(([k]) => k !== 'sh' || spec.id === 'switch').map(([k, t]) => '<button type="button" data-wire="' + k + '" aria-pressed="' + (kind === k) + '" style="--wire:' + t.color + '">' + esc(t.label) + '</button>').join('') + '</div>' +
-        '<div class="bw-board"><svg class="bw-lines" aria-hidden="true"></svg>' + spec.groups.map(g => '<section class="bw-group"><h4>' + esc(g.title) + '</h4>' + g.nodes.map(n => '<button type="button" class="bw-terminal" data-terminal="' + n.id + '" aria-pressed="' + (selected === n.id) + '"><span aria-hidden="true">' + (n.hub ? '◆' : '●') + '</span> ' + esc(n.label) + '</button>').join('') + '</section>').join('') + '</div>' +
-        '<div class="bw-actions"><button type="button" data-action="check">Check wiring</button><button type="button" data-action="undo"' + (!wires.length ? ' disabled' : '') + '>Undo wire</button><button type="button" data-action="reset">Reset board</button></div>' +
-        '<p class="bw-feedback' + (result?.ok ? ' bw-correct' : '') + '" role="status" aria-live="polite">' + esc(message) + '</p>' +
-        '<h4>Connections (' + wires.length + ')</h4><ol class="bw-connections">' + wires.map((w, i) => '<li>' + esc(byId.get(w[0]).label) + ' ↔ ' + esc(byId.get(w[1]).label) + ' <small>' + esc(TYPES[w[2]].label) + '</small> <button type="button" data-remove="' + i + '" aria-label="Remove connection ' + (i+1) + '">Remove</button></li>').join('') + '</ol>' +
-        (!wires.length ? '<p>No connections yet.</p>' : '') +
-        '<details class="bw-guide"><summary>Show a connection guide</summary><p>One correct arrangement is listed below. Select the matching conductor before drawing each connection. A basic switch also accepts its two brass terminals reversed.</p><ol>' + spec.answer.map(w => '<li>' + esc(TYPES[w[2]].label) + ': ' + esc(byId.get(w[0]).label) + ' → ' + esc(byId.get(w[1]).label) + '</li>').join('') + '</ol></details>';
-      cancelAnimationFrame(frame); frame = requestAnimationFrame(draw);
-      if (focus) host.querySelector(focus)?.focus();
-    }
-    function changed() { checked = false; notify(); }
-    function click(e) {
-      const b = e.target.closest('button'); if (!b || !host.contains(b)) return;
-      if (b.dataset.wire) {
-        kind = b.dataset.wire; selected = null; message = 'Selected ' + TYPES[kind].label + '. Choose the first terminal.';
-        render('[data-wire="' + kind + '"]'); return;
-      }
-      if (b.dataset.terminal) {
-        const id = b.dataset.terminal;
-        if (!selected) { selected = id; message = 'Selected ' + byId.get(id).label + '. Now choose the other terminal.'; }
-        else if (selected === id) { selected = null; message = 'Selection cancelled. Choose a terminal to begin again.'; }
-        else {
-          const a = selected; selected = null;
-          if (wires.some(w => (w[0] === a && w[1] === id) || (w[0] === id && w[1] === a))) message = 'Those terminals are already connected.';
-          else if ([a, id].some(n => !byId.get(n).hub && wires.some(w => w[0] === n || w[1] === n))) message = 'That terminal already has a wire. Use a connector node for branching, or remove the existing wire.';
-          else { wires.push([a, id, kind]); message = 'Connection added. Continue wiring, or check your work.'; changed(); }
-        }
-        render('[data-terminal="' + id + '"]'); return;
-      }
-      if (b.dataset.remove !== undefined) { wires.splice(Number(b.dataset.remove), 1); selected = null; message = 'Connection removed.'; changed(); render('[data-action="check"]'); return; }
-      const action = b.dataset.action;
-      if (action === 'check') { checked = true; selected = null; message = validate(spec, wires).message; notify(); }
-      if (action === 'undo') { wires.pop(); selected = null; message = 'Last connection removed.'; changed(); }
-      if (action === 'reset') { wires = []; selected = null; message = 'Board reset. Choose a conductor and connect two terminals.'; changed(); }
-      render('[data-action="' + action + '"]');
-    }
-    host.addEventListener('click', click);
-    const observer = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => { cancelAnimationFrame(frame); frame = requestAnimationFrame(draw); }) : null;
-    observer?.observe(host);
-    root.addEventListener('resize', draw);
-    render(); notify();
-    return () => { disposed = true; cancelAnimationFrame(frame); observer?.disconnect(); root.removeEventListener('resize', draw); host.removeEventListener('click', click); };
+  const defs = {
+    trainingfeed: { name: 'Isolated training supply', terms: [[90,-45],[90,0],[90,45]], labels: ['HOT','NEUTRAL','GROUND'], box: [-90,-85,180,170] },
+    outletbox: { name: 'Receptacle outlet box', terms: [[105,-30],[-105,-30],[42,100],[-42,100]], labels: ['BRASS · H','SILVER · N','GREEN · G','BOX BOND'], box: [-105,-90,210,190] },
+    devicebox: { name: 'Switch device box', terms: [[105,-40],[105,20],[42,100],[-42,100]], labels: ['BRASS 1','BRASS 2','GREEN · G','BOX BOND'], box: [-105,-90,210,190] },
+    junctionbox: { name: 'Junction box', terms: [[-105,-40],[-105,25],[105,-40],[105,25]], labels: ['HOT SPLICE','NEUTRAL','GROUND','BOX BOND'], box: [-105,-90,210,180] },
+    pullbox: { name: 'Pull box', terms: [[-140,-55],[-140,0],[-140,55],[140,-55],[140,0],[140,55],[55,105]], labels: ['IN · H','IN · N','IN · G','OUT · H','OUT · N','OUT · G','BOX BOND'], box: [-140,-90,280,195] },
+    wireconnector: { name: 'Splice connector', terms: [[0,0]], labels: ['CONNECTOR'], box: [-40,-25,80,50] },
+    cableend: { name: 'Outgoing cable', terms: [[-90,-45],[-90,0],[-90,45]], labels: ['HOT','NEUTRAL','GROUND'], box: [-90,-85,180,170] },
+    buildingload: { name: 'Light fixture', terms: [[-90,-45],[-90,0],[-90,45]], labels: ['SW. HOT','NEUTRAL','GROUND'], box: [-90,-85,180,170] }
+  };
+  const isPart = p => !!defs[p.type];
+  function markup(p) {
+    const d = defs[p.type], b = d.box;
+    let h = '<rect class="building-shell" x="' + (b[0]+7) + '" y="' + (b[1]+7) + '" width="' + (b[2]-14) + '" height="' + (b[3]-14) + '" rx="14"/>';
+    if (p.type === 'outletbox') h += '<rect class="building-device" x="-30" y="-58" width="60" height="114" rx="9"/>' + [-28,24].map(y => '<rect x="-15" y="' + y + '" width="5" height="14" rx="1" fill="#151b26"/><rect x="10" y="' + y + '" width="4" height="11" rx="1" fill="#151b26"/><path d="M-5 ' + (y+26) + ' a5 5 0 0 1 10 0 v4 h-10z" fill="#151b26"/>').join('');
+    if (p.type === 'devicebox') h += '<rect class="building-device" x="-28" y="-57" width="56" height="113" rx="8"/><rect class="building-toggle" x="-14" y="' + (p.closed ? -34 : 1) + '" width="28" height="32" rx="4"/><text class="building-state" x="0" y="76">' + (p.closed ? 'ON' : 'OFF') + '</text>';
+    if (p.type === 'trainingfeed') h += '<text class="building-center" x="-20" y="-50">ISOLATED</text><text class="building-center" x="-20" y="-28">TRAINING FEED</text><text class="building-small" x="0" y="65">CONNECTIONS ONLY</text>';
+    if (p.type === 'buildingload') h += '<circle class="building-glow" r="62" fill="url(#glowGrad)" opacity="0"/><circle class="building-lamp" r="31"/><path class="pl" d="M-18 -18 L18 18 M18 -18 L-18 18"/>';
+    if (p.type === 'junctionbox') h += '<text class="building-center" x="0" y="-64">SPLICE INSIDE BOX</text><rect class="building-connector" x="-65" y="-46" width="34" height="16" rx="4"/><rect class="building-connector" x="-65" y="17" width="34" height="16" rx="4"/><rect class="building-connector" x="31" y="-46" width="34" height="16" rx="4"/>';
+    if (p.type === 'pullbox') h += '<text class="building-center" x="0" y="-62">PULL THROUGH</text><text class="building-small" x="0" y="79">CONTINUOUS H / N</text>';
+    if (p.type === 'wireconnector') h = '<rect class="building-connector" x="-22" y="-16" width="44" height="32" rx="7"/>';
+    if (p.type === 'cableend') h += '<text class="building-center" x="12" y="-12">OUTGOING</text><text class="building-center" x="12" y="10">CABLE</text>';
+    if (p.type !== 'wireconnector') d.terms.forEach(([x,y], k) => {
+      const bottom = y >= 100, tx = bottom ? x : x < 0 ? x+13 : x-13;
+      h += '<text class="building-port" x="' + tx + '" y="' + (bottom ? y-13 : y-9) + '" text-anchor="' + (bottom ? 'middle' : x < 0 ? 'start' : 'end') + '">' + d.labels[k] + '</text>';
+    });
+    return h;
   }
-  root.BoxWiring = { mount, validate };
+  function compute(parts, wires) {
+    const feed = parts.find(p => p.type === 'trainingfeed' && p.plan);
+    let result = { ok:false, incomplete:true, message:'Use Give me the parts to restore the exercise.' }, paths = {};
+    let spec = null;
+    if (feed) {
+      const map = new Map();
+      parts.forEach(p => (p.ports || []).forEach((id,k) => map.set(id, p.id + ':' + k)));
+      const raw = feed.plan;
+      if (terminals(raw).every(n => map.has(n.id))) {
+        spec = { ...raw, groups: raw.groups.map(g => ({ ...g, nodes:g.nodes.map(n => ({ ...n, id:map.get(n.id) })) })),
+          nets:raw.nets.map(net => net.map(id => map.get(id))), alternatives:(raw.alternatives || []).map(ns => ns.map(net => net.map(id => map.get(id)))) };
+        const ws = wires.map(w => [w.a,w.b,w.c]);
+        result = validate(spec,ws);
+        if (wires.some(w => w.open)) result = { ok:false, message:'Replace the open wire before completing this circuit.' };
+        if (result.ok || result.incomplete) {
+          const parent = new Map(terminals(spec).map(n => [n.id,n.id]));
+          const find = id => parent.get(id) === id ? id : find(parent.get(id));
+          ws.forEach(w => parent.set(find(w[0]),find(w[1])));
+          const kinds = new Map(terminals(spec).map(n => [n.id,n.kind]));
+          const candidates = [spec.nets].concat(spec.alternatives || []);
+          // Choose the valid orientation before checking partial paths.
+          const chosen = candidates.find(ns => {
+            const ni = new Map(); ns.forEach((net,i) => net.forEach(id => ni.set(id,i)));
+            return ws.every(w => ni.get(w[0]) === ni.get(w[1]));
+          }) || spec.nets;
+          chosen.forEach(net => {
+            const kind = net.map(id => kinds.get(id)).find(k => k !== 'switch');
+            paths[kind] = net.every(id => find(id) === find(net[0]) && ws.some(w => w[0] === id || w[1] === id));
+          });
+        }
+      }
+    }
+    const sw = parts.find(p => p.type === 'devicebox');
+    const functional = !!result.ok && (!sw || !!sw.closed);
+    const res = {}; parts.filter(isPart).forEach(p => { res[p.id] = { ready:!!result.ok, lit:functional && p.type === 'buildingload' }; });
+    return { res, wireI:{}, faults:[], faultWires:new Set(), meters:[], meggers:[], clamps:[], blew:[], blewBat:[], blewFuse:[],
+      stats:{ bulbs:[],lit:functional ? parts.filter(p => p.type === 'buildingload').length : 0,blown:0,off:0,batteries:0,blownBat:0,shorts:0,faults:[],wiresRed:0,wiresBlack:0,
+        switches:parts.filter(p => p.type === 'devicebox').map(p => ({id:p.id,closed:!!p.closed})),junctions:0,wires:wires.length,parts:parts.length,sel:null,meters:[],meggers:[],clamps:[],provers:0,cables:0,blownFuses:0,hidden:0,
+        building:{correct:!!result.ok,safe:!!(result.ok || result.incomplete),message:result.message,paths,functional} }
+    };
+  }
+  root.BoxWiring = { validate, defs, isPart, markup, compute, types:TYPES };
 })(window);
+

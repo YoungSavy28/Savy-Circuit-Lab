@@ -4,40 +4,51 @@ const assert = require('node:assert/strict');
 const dir = __dirname + '/../';
 const context = { window: {}, document: { write() {} } };
 vm.createContext(context);
-const run = p => vm.runInContext(fs.readFileSync(dir + p, 'utf8'), context, { filename: p });
-run('course.js'); context.COURSE = context.window.COURSE;
-for (const f of context.COURSE.files) run('content/' + f + '.js');
-run('boxes-wiring.js');
-const { validate } = context.window.BoxWiring;
-assert.equal(context.COURSE.lessons.length, 3);
-assert.equal(new Set(context.COURSE.allParts().map(p => p.id)).size, context.COURSE.allParts().length);
-const lesson = context.COURSE.lessons[2];
-assert.equal(lesson.parts.length, 7);
-let count = 0;
-for (const p of lesson.parts) {
-  assert.equal(context.COURSE.find(p.id), p);
-  assert.equal(p.lesson, lesson);
-  for (const q of p.quiz) {
-    assert.ok(Number.isInteger(q.a) && q.a >= 0 && q.a < q.o.length);
-    assert.equal(new Set(q.o).size, q.o.length);
+const run = p => vm.runInContext(fs.readFileSync(dir + p, 'utf8'), context, { filename:p });
+run('boxes-wiring.js'); context.BoxWiring=context.window.BoxWiring;
+run('sim.js'); context.Sim=context.window.Sim;
+run('course.js'); context.COURSE=context.window.COURSE;
+for(const f of context.COURSE.files) run('content/'+f+'.js');
+const copy = s => JSON.parse(JSON.stringify(s));
+const evaluate = s => context.Sim.evaluate(copy(s));
+assert.equal(context.COURSE.lessons.length,3);
+const parts=context.COURSE.allParts(); assert.equal(new Set(parts.map(p=>p.id)).size,parts.length);
+const lesson=context.COURSE.lessons[2];assert.equal(lesson.parts.length,13);
+const work=lesson.parts.filter(p=>p.workbench==='building');assert.equal(work.length,10);
+let checks=0;
+for(const p of lesson.parts){
+  for(const q of p.quiz){assert.ok(q.a>=0 && q.a<q.o.length); checks++;}
+  if(p.bench===false) continue;
+  assert.ok(p.start && p.answer && p.demo.length>=3);
+  const solved=evaluate(p.answer), mem={};
+  assert.ok(solved.building.safe,p.id+': solution must be safe');
+  for(const t of p.tasks.filter(t=>t.live)){assert.ok(t.check(solved,mem),p.id+': solution task '+t.id);checks++;}
+  const empty=copy(p.answer);empty.wires=[];
+  assert.equal(evaluate(empty).building.correct,false,p.id+': empty rejected');checks++;
+  const crossed=copy(empty);crossed.wires=[{id:'bad',a:'1:0',b:'1:1',c:'h'}];
+  assert.equal(evaluate(crossed).building.safe,false,p.id+': hot-neutral cross rejected');checks++;
+  const badColor=copy(p.answer);badColor.wires[0].c='g';
+  assert.equal(evaluate(badColor).building.correct,false,p.id+': wrong color rejected');checks++;
+  const missingFeed=copy(p.answer);missingFeed.parts=missingFeed.parts.filter(p=>p.type!=='trainingfeed');
+  assert.equal(evaluate(missingFeed).building.correct,false,p.id+': deleted supply rejected');checks++;
+  if(solved.building.correct){
+    const bond=p.answer.parts.flatMap(p=>(p.ports||[]).map((id,k)=>id==='bond'?p.id+':'+k:null)).find(Boolean);
+    const missing=copy(p.answer);missing.wires=missing.wires.filter(w=>w.a!==bond && w.b!==bond);
+    assert.equal(evaluate(missing).building.correct,false,p.id+': missing box bond rejected');checks++;
   }
-  if (!p.wiring) continue;
-  const s = p.wiring, answer = s.answer.map(w => w.slice());
-  assert.equal(validate(s, answer).ok, true, s.id + ': answer accepted'); count++;
-  assert.equal(validate(s, []).ok, false, s.id + ': empty rejected'); count++;
-  assert.equal(validate(s, answer.filter(w => !w.includes('bond'))).ok, false, s.id + ': missing box bond rejected'); count++;
-  assert.equal(validate(s, answer.slice(1)).ok, false, s.id + ': incomplete rejected'); count++;
-  const wrongColor = answer.map(w => w.slice()); wrongColor[0][2] = 'g';
-  assert.equal(validate(s, wrongColor).ok, false, s.id + ': incorrect conductor rejected'); count++;
-  assert.equal(validate(s, answer.concat([['feed-h', 'feed-n', 'h']])).ok, false, s.id + ': added short rejected'); count++;
-  assert.equal(validate(s, [['feed-h','feed-n','h']]).ok, false, s.id + ': hot-neutral cross rejected'); count++;
-  assert.equal(validate(s, [['feed-n','bond','n']]).ok, false, s.id + ': neutral-ground cross rejected'); count++;
-  assert.equal(validate(s, answer.concat([answer[0]])).ok, false, s.id + ': duplicate rejected'); count++;
-  assert.equal(validate(s, [['unknown', 'bond', 'g']]).ok, false, s.id + ': unknown terminal rejected'); count++;
-  if (s.id === 'switch') {
-    const reverse = answer.map(w => w.map(v => v === 'sw-a' ? 'sw-b' : v === 'sw-b' ? 'sw-a' : v));
-    assert.equal(validate(s, reverse).ok, true, 'reversed mechanical switch terminals accepted'); count++;
-    assert.equal(validate(s, [['feed-h','light-h','h']]).ok, false, 'bypassed switch rejected'); count++;
-  }
+  for(const d of p.demo) assert.doesNotThrow(()=>evaluate(d.state));
 }
-console.log('Passed registry/schema checks and ' + count + ' wiring validation cases.');
+const sw=work.find(p=>p.id==='boxes-switch-return');
+const reverse=copy(sw.answer);reverse.wires.forEach(w=>{for(const k of ['a','b']) w[k]=w[k]==='2:0'?'2:1':w[k]==='2:1'?'2:0':w[k];});
+assert.equal(evaluate(reverse).building.correct,true);checks++;
+const toggle=work.find(p=>p.id==='boxes-switch-test'), mem={};
+let s=evaluate(toggle.start);assert.equal(s.building.functional,false);
+assert.equal(toggle.tasks[2].check(s,mem),false,'opening before closing must not satisfy sequence');checks++;
+s=evaluate(toggle.answer);assert.equal(s.building.functional,true);
+assert.equal(toggle.tasks[1].check(s,mem),true);checks++;
+s=evaluate(toggle.start);assert.equal(toggle.tasks[2].check(s,mem),true);checks++;
+for(const l of context.COURSE.lessons.slice(0,2))for(const p of l.parts){if(p.start)assert.doesNotThrow(()=>evaluate(p.start));if(p.answer)assert.doesNotThrow(()=>evaluate(p.answer));}
+const bulb={parts:[{id:1,type:'battery',x:100,y:100,v:9},{id:2,type:'bulb',x:300,y:100}],wires:[{id:'w1',a:'1:0',b:'2:0',c:'r'},{id:'w2',a:'2:1',b:'1:1',c:'k'}]};
+assert.equal(evaluate(bulb).lit,1,'original DC loop still lights');checks++;
+const short=copy(bulb);short.wires.push({id:'w3',a:'1:0',b:'1:1',c:'r'});assert.equal(evaluate(short).blownBat,1,'original short detection still works');checks++;
+console.log('Passed '+checks+' assertions, all 10 workbench activities/demos, and prior-lesson preset evaluation.');

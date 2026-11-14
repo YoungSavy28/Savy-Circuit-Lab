@@ -24,7 +24,7 @@ const allParts = () => C.allParts();
 
 function done(p) {
   const g = pg(p.id);
-  if (p.workbench === 'building') return p.tasks.every(t => g.tasks[t.id]) && (p.quiz || []).every((_,i) => g.quiz['q'+i] !== undefined);
+  if (p.workbench === 'building' || p.workbench === 'cables') return p.tasks.every(t => g.tasks[t.id]) && (p.quiz || []).every((_,i) => g.quiz['q'+i] !== undefined);
   if (p.tasks && p.tasks.length) return p.tasks.every(t => g.tasks[t.id]);
   if (p.quiz && p.quiz.length) return p.quiz.every((_, i) => g.quiz['q' + i] !== undefined);
   return !!g.read;
@@ -97,8 +97,9 @@ function renderPart() {
 /* ---------- test-equipment buttons: shown only where a part asks for them ---------- */
 function setTools(p) {
   const building = p.workbench === 'building';
-  Sim.setWorkbench(building);
-  document.querySelectorAll('[data-battery-tools]').forEach(el => { el.hidden=building; });
+  const cables=p.workbench==='cables';
+  Sim.setWorkbench(cables?'cables':building);
+  document.querySelectorAll('[data-battery-tools]').forEach(el => { el.hidden=building||cables; });
   document.querySelectorAll('[data-building-tools]').forEach(el => { el.hidden=!building; });
   const want = p.sandbox ? ['dmm', 'clamp', 'prover', 'megger', 'cable'] : (p.tools || []);
   document.querySelectorAll('[data-tool]').forEach(b => { b.hidden = want.indexOf(b.dataset.tool) < 0; });

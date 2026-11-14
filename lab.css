@@ -277,3 +277,21 @@ details.hint summary{cursor:pointer;color:var(--neon)}details.hint p{margin:8px 
 .device-terminal.terminal-h .ring{stroke:#d4aa55}.device-terminal.terminal-n .ring{stroke:#eff2f7}.device-terminal.terminal-g .ring{stroke:#65dca3}
 .device-terminal:hover .ring,.device-terminal.pend .ring{opacity:1;stroke-width:3}
 .wire.h,.pv.h{stroke:#252a33;filter:drop-shadow(0 0 1px #d4a74d)}
+/* Cable preparation scenes live inside the same workbench viewport. */
+.cl-work-surface{fill:#0c1420;stroke:#334358;stroke-width:2}
+.cl-heading{fill:#ffd081;text-anchor:middle;font:700 20px Inter,system-ui,sans-serif}
+.cl-text,.cl-caption,.cl-feedback,.cl-legend,.cl-button-label,.cl-tool-label{fill:#dce5f1;text-anchor:middle;font:13px Inter,system-ui,sans-serif;pointer-events:none}
+.cl-caption{font-size:11px;fill:#aebdd1}.cl-feedback{font-size:12px;fill:#ffd081}.cl-legend{font:12px monospace;fill:#b9c7d9}
+.cl-button rect{fill:#1a273b;stroke:#4b5f7a;stroke-width:1.5}.cl-button{cursor:pointer}.cl-button:hover rect,.cl-button.on rect{stroke:#ffbf59;fill:#3d3020}.cl-button:focus{outline:none}.cl-button:focus rect{stroke:#56c7ff;stroke-width:3}
+.cl-button-label{font-size:11px;font-weight:600}.cl-tool-label{font-size:12px;font-weight:600;fill:#ffd081}
+.cl-tool{cursor:grab}.cl-tool-hit{fill:transparent;stroke:none}.cl-tool-steel{fill:#b4bfcc;stroke:#e3e8ee;stroke-width:2}
+.cl-tool-handle{fill:none;stroke:#eb843f;stroke-width:13;stroke-linecap:round}.cl-armor-wheel{fill:#7e8c9d;stroke:#e2e5e7;stroke-width:2}
+.cl-cable-shadow{fill:#070c14;opacity:.7}.cl-jacket-label{fill:#292b27;text-anchor:middle;font:bold 14px monospace}
+.cl-mark{fill:none;stroke:#ff6868;stroke-width:4}.cl-drop-zone{fill:none;stroke:#ffbf59;stroke-width:2;stroke-dasharray:5 5;pointer-events:none}
+.cl-drag-ghost{fill:#edb455;fill-opacity:.3;stroke:#ffdb89;stroke-width:3;pointer-events:none}
+.cl-wall{fill:#222a32;stroke:#586676;stroke-width:2}.cl-stud{fill:#8e7050;stroke:#bd9a6c;stroke-width:2}
+.cl-pipe{fill:none;stroke:#9c8c78;stroke-width:15}.cl-outlet-opening{fill:#080c12;stroke:#aebccf;stroke-width:2}.cl-box{fill:#47556b;stroke:#8497b2;stroke-width:2}
+.cl-reel{fill:#e8a246;stroke:#ffe4b5;stroke-width:3}.cl-fishtape{fill:none;stroke:#b8c8dd;stroke-width:4}
+.cl-pulled-cable{fill:none;stroke:#dfbd4e;stroke-width:8}.cl-tip{fill:#6ed5ed;stroke:#e4fbff;stroke-width:2}.cl-tip-hit{fill:transparent;stroke:none;cursor:grab}
+.cl-wire-nut{fill:#ed9733;stroke:#ffe1a3;stroke-width:2}.cl-nut-ridges{fill:none;stroke:#925819;stroke-width:3}
+.cl-driver-handle{fill:#e78339;stroke:#ffb869;stroke-width:2}.cl-terminal-block{fill:#a8acaf;stroke:#e9e9e7;stroke-width:2}.cl-brass-screw{fill:#c69a42;stroke:#f2d786;stroke-width:2}

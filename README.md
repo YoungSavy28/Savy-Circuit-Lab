@@ -80,3 +80,18 @@ Run dependency-free checks with Node.js:
 ```sh
 node tests/boxes-wiring.cjs
 ```
+
+## Conductors, cables and cable fishing (Lesson 4)
+Twenty parts include eighteen hands-on activities with isolated practice specimens.
+Explore NM-B, UF-B, MC, THHN/THWN-2, Cat 6, coax and SOOW. Read cable legends,
+measure and cut cable, use a combination stripper to cut a conductor, open a
+jacket, strip insulation, reject/repair damage, prepare armor, secure a twist-on
+connector and practice a terminal screw connection.
+
+The wall model separates route surveying, feeding the fish tape, attaching a
+smooth tapered joint, pulling through the approved opening and recovering from
+a snag. Pointer paths are checked against the stud bay, blocking and pipe.
+These are procedure models, not code approval or physical force/torque models.
+
+Run the added checks with `node tests/cable-lab.cjs`. Earlier-lesson checks remain
+in `node tests/boxes-wiring.cjs`. No packages or network access are required.
